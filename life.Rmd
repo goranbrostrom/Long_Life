@@ -1,0 +1,49 @@
+---
+title: "Life is short"
+author: "Göran Broström"
+date: "April 11, 2018"
+output: html_document
+---
+
+```{r datain}
+library(skum)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Introduction
+
+This is a preparation for a talk with the title
+
+"life is short but unlimited"
+
+that will be given (for the first time) at CEDAR, Umeå University, on the 17th of May, 2018, at 1300 hours. Inspired by the paper
+
+
+## High ages at death, Skellefteå and Umeå 1801--1950
+
+```{r maxyearskum}
+years <- 1801:1950
+ages <- numeric(length(years))
+dobs <- obs[obs$sluttyp == 2, c("sex", "birthdate", "exit", "region")]
+dobs$deathdate <- dobs$birthdate + dobs$exit
+dobs$event <- 1
+for (i in seq_along(years)){
+    nu <- dobs[floor(dobs$deathdate) == years[i], "exit"]
+    ages[i] <- max(nu)
+}
+plot(years, ages, type = "p", col = "blue", xlab = "Year", ylab = "Max death age") 
+abline(h = 100, col = "red")
+```
+
+## The Human Mortality Database
+
+```{r dataswed}
+deaths <- read.table("data/HMD/Deaths_1x1.txt", header = TRUE, skip = 3)
+head(deaths)
+expos <- read.table("data/HMD/Exposures_1x1.txt", header = TRUE, skip = 3)
+head(expos)
+rates <- read.table("data/HMD/Mx_1x1.txt", header = TRUE, skip = 3)
+```
