@@ -86,4 +86,9 @@ rownames(fem) <- 0:110
 
 ```{r idldata}
 usa <- read.table("data/IDL/usa.csv", header = TRUE, sep = ";")
+x <- with(usa, tapply(Age.days. / 365.25, Date.of.death, max))
+plot(1980:2003, x, xlab = "Year", ylab = "Age", ylim = c(110, 120), col = "blue")
+abline(h = 110)
+abline(h = 111:120, lty = 3, col = "green")    
+with(usa, points(Date.of.death, Age.days. / 365.25, cex = 0.25, col = "blue"))
 ```
