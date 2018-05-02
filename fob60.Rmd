@@ -1,0 +1,141 @@
+---
+title: "From FOB60"
+author: "Göran Broström"
+date: "May 2, 2018"
+output: 
+  bookdown::html_document2:
+      number_sections: yes
+      toc: yes
+      toc_depth: 1
+      toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warnings=FALSE)
+library(eha)
+options(warn = -1)
+```
+
+# Introduction
+
+In this retrieval, I choose all persons present in *FOB60* and born between January 1, 1901 and December 31, 1910 (inclusive). 
+In this version we have only birth year and quarter, and death year. I will assume that the real birthdate is one of 15 February (first quarter),
+15 May (second quarter), 15 August (third quarter), and 15 November (fourth quarter).  The death date is 1 July for all.
+
+No covariates except *sex*, *kommun*, *marriage status*, and *quarter* are included for now.
+
+# The individual info
+
+We get the individual information from *inddata.rda* (an **R** version of *FIL4_INDDATA.csv*).
+
+```{r frominddata}
+load("~/Forskning/read_U18006/data/inddata.rda")
+per <- inddata[!is.na(inddata$KON) & # KON får inte saknas
+                   (inddata$FODELSEAR >= 1901) &
+                   (inddata$FODELSEAR <= 1905), ]
+per$birthdate <- per$FODELSEAR + 0.125  +  (per$FODELSEKVARTAL - 1) / 4
+per$FODELSEAR <- NULL # Remove FODELSEAR
+per$kvartal <- factor(per$FODELSEKVARTAL, 
+                      labels = c("first", "second", "third", "fourth"))
+per$FODELSEKVARTAL <- NULL # Remove
+per$sex <- factor(per$KON, labels = c("male", "female"))
+per$KON <- NULL # Remove
+head(per)
+summary(per, digits = 7)
+```
+
+# FOB 60
+
+First we read the whole FOB and make the required selections.
+
+```{r getfob60}
+load("~/Forskning/read_U18006/data/fob.rda")
+fob60 <- fob[fob$AR == 1960, c("LINNEID", "KOMMUN", "CIVIL")]
+fob60$kommun <- factor(fob60$KOMMUN)
+fob60$KOMMUN <- NULL # Remove KOMMUN
+fob60$civst <- factor(fob60$CIVIL, 
+                      labels = c("unmarried", "married", "divorced", "widow", "sambo"))
+fob60$CIVIL <- NULL # Remove
+fob60 <- fob60[fob60$LINNEID %in% per$LINNEID, ] # Must be found in 'per'
+head(fob60)
+summary(fob60)
+```
+
+# Add info to *fob60*
+
+First info from *per*:
+
+```{r addinfoper}
+indx <- match(fob60$LINNEID, per$LINNEID)
+fob60$birthdate <- per$birthdate[indx] # That's the matching!
+fob60$kvartal <- per$kvartal[indx] # Ditto.
+fob60$sex <- per$sex[indx] # Ditto.
+```
+
+Then we need the age at death ("exit").
+
+```{r deathdates}
+load("~/Forskning/read_U18006/data/dors.rda") # "Causes of death file"
+indx <- match(fob60$LINNEID, dors$LINNEID)
+fob60$exit <- dors$ALDER[indx]
+fob60$event <- !is.na(fob60$exit) # event == TRUE om finns i dödsregistret, FALSE annars
+##summary(fob60)
+```
+
+Then we need the age at the time for *FOB60* (1 November, 1960) for each person ("enter", left truncation):
+
+```{r addenter}
+fobdate <- as.numeric(toTime("1960-11-01")) # = 1960.834
+fob60$enter <- fobdate - fob60$birthdate
+summary(fob60, digits = 7)
+```
+
+So, `r table(fob60$event)[1]` persons out of `r nrow(fob60)` didn't die (in Sweden), and we need to find the date they were last seen 
+by looking in later FOBs and in the *LISA* data. But that can wait until later.
+
+More seriously, it seems as if some guys died long before they appeared in *FOB60* (min(exit) = 47). 
+
+```{r dieearly}
+(koll <- fob60[!is.na(fob60$exit) & fob60$exit < 48, ])
+```
+
+Let us look at them in the death register:
+
+```{r, inherit}
+dors[dors$LINNEID %in% koll$LINNEID, ]
+```
+
+So each of these guys has *two* death ages! This is the business of *inherited LINNEID*: A person may get the id of a previously deceased one! We must find a way to deal with this in a correct way (shouldn't be too difficult), but for the time being I just remove all cases with missing exit or exit <= enter. So I can show you *some* result.
+
+```{r prelfix}
+fob60 <- fob60[!is.na(fob60$exit) & fob60$enter < fob60$exit, ]
+##summary(fob60, digits = 7)
+```
+
+# A preliminary analysis
+
+Let's look at survival by sex:
+
+```{r cumhaz}
+fit <- phreg(Surv(enter - min(enter), exit - min(enter), event) ~ strata(sex) + 
+                  civst + I(kommun == "180") + kvartal, data = fob60, dist = "gompertz")
+summary(fit)
+```
+*kommun == "180"* is *Stockholm*, which seems to be worse off compared to the rest of the country. Also maybe interesting is the fact 
+that *birth quarter* seems to influence survival chances.
+
+And the survival curves look like this:
+
+```{r plotsur}
+plot(fit, xlab = "Age - 55", 
+     col = c("blue", "red"), fn = "sur")
+abline(h = 0)
+abline(h = 0.5, lty = 3, col = "green")
+```
+
+# Conclusion
+
+Everything seems reasonable, but there are some quirks that remain, most seriously the *inherited LINNEID*.
+
+
+
