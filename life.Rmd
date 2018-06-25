@@ -13,7 +13,7 @@ library(skum)
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## Introduction
+# Introduction
 
 This is a preparation for a talk with the title
 
@@ -22,7 +22,7 @@ This is a preparation for a talk with the title
 that will be given (for the first time) at CEDAR, Umeå University, on the 17th of May, 2018, at 1300 hours. Inspired by the paper
 
 
-## High ages at death, Skellefteå and Umeå 1801--1950
+# High ages at death, Skellefteå and Umeå 1801--1950
 
 ```{r maxyearskum}
 years <- 1801:1950
@@ -38,7 +38,7 @@ plot(years, ages, type = "p", col = "blue", xlab = "Year", ylab = "Max death age
 abline(h = 100, col = "red")
 ```
 
-## The Human Mortality Database
+# The Human Mortality Database
 
 ```{r dataswed}
 deaths <- read.table("data/HMD/Deaths_1x1.txt", header = TRUE, skip = 3, stringsAsFactors = FALSE, na.strings = ".")
@@ -62,7 +62,7 @@ rates$Age[rates$Age == "110+"] <- "110"
 rates$Age <- as.integer(rates$Age)
 ```
 
-### Females
+## Females
 
 ```{r females}
 females <- rates[["Female"]]
@@ -71,7 +71,7 @@ colnames(fem) <- 1751:2016
 rownames(fem) <- 0:110
 ```
 
-### Calendar time averages 
+## Calendar time averages 
 
 The table with ten-year agerages is loaded.
 
@@ -82,7 +82,7 @@ afem <- matrix(afemales, nrow = 111)
 rownames(fem) <- 0:110
 ```
 
-## The International Database on Longevity
+# The International Database on Longevity
 
 ```{r idldata}
 usa <- read.table("data/IDL/usa.csv", header = TRUE, sep = ";")
@@ -92,3 +92,51 @@ abline(h = 110)
 abline(h = 111:120, lty = 3, col = "green")    
 with(usa, points(Date.of.death, Age.days. / 365.25, cex = 0.25, col = "blue"))
 ```
+
+# Lisa data
+
+```{r readlisa}
+lst <- list.files("data/LISA/")
+lst = paste("data/LISA", lst, sep = "/")
+n <- length(lst)
+lisa <- vector(mode = "list", length = n)
+for (i in 1:n){
+    lisa[[i]] <- readRDS(lst[i])
+}
+lisall <- do.call(rbind, lisa)
+```
+
+## Cohort 90+
+
+```{r coh90, fig.height = 12}
+yrs <- 1986:1997
+n <- length(yrs)
+par(mfrow = c(4, 3))
+for (i in 1:n){
+    ids <- unique(lisall$LINNEID[lisall$birthdate > yrs[i] - 90 & lisall$birthdate <= yrs[i] - 89])
+    fit <- coxph(Surv(enter-90, exit-90, event) ~ strata(sex), data = lisall[lisall$LINNEID %in% ids, ])
+    plot(survfit(fit), mark.time = FALSE, col = c("blue", "red"), fun = "cumhaz", main = yrs[i])
+}
+```
+
+## Cohort 100+
+
+```{r coh100, fig.height = 12}
+lisall100 <- age.window(lisall, c(100, 115))
+yrs <- 1986:1999
+n <- length(yrs)
+par(mfrow = c(5, 3))
+for (i in 1:n){
+    ids <- unique(lisall100$LINNEID[lisall100$birthdate >  yrs[i] - 100 & lisall100$birthdate <= yrs[i] - 99])
+    fit <- coxph(Surv(enter, exit, event) ~ strata(sex), data = lisall100[lisall100$LINNEID %in% ids, ])
+    plot(survfit(fit, start.time = 100), xlim = c(100, 113), mark.time = FALSE, col = c("blue", "red"), fun = "cumhaz", main = yrs[i], ylim = c(0, 6.5),
+         xlab = "Age")
+}
+ids <- unique(lisall100$LINNEID[lisall100$birthdate >  yrs[1] - 100 & lisall100$birthdate <= yrs[n] - 99])
+lisall100all <- lisall100[lisall100$LINNEID %in% ids, ]
+    fit <- coxph(Surv(enter, exit, event) ~ strata(sex), data = lisall100all)
+    plot(survfit(fit, start.time = 100), xlim = c(100, 113), mark.time = FALSE, col = c("blue", "red"), fun = "cumhaz", main = "1986-1999", ylim = c(0, 6.5),
+         xlab = "Age", ylab = "Cumulative hazards")
+```
+
+

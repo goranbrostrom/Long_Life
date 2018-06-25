@@ -1,0 +1,13 @@
+~/Forskning/Data/U18006_RDA: Raw data from U18006, but in 'RDS' form
+(fob.rds, lisa.rds, etc). Read by 'getDataRDS.Rmd'.
+(should be structured such that it is ../Data/U18006_RDA)
+
+data/FOB: Data sets created by 'readFob.Rmd' (fobb1960.rds, ..., fobb1990. rds) 
+data/LISA: Data sets created by 'readLisa.Rmd' (lisa1986, ..., lisa2013.rds).
+
+          Cover all individuals, but selected variables, some constructed 
+          ('enter', 'exit', 'event', ...). Each file covers only the time
+	  period up to the next FOB/LISA. Deaths within this period are
+	  recorded and spells cut accordingly. Age interval at start is given.
+          
+          

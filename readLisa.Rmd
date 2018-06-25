@@ -1,0 +1,152 @@
+---
+title: "fromFobLisa, Version RDS"
+author: "Göran Broström"
+date: "May 28, 2018"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+fontsize: 11pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = FALSE,cache.lazy = FALSE)
+options(stringsAsFactors = FALSE)
+library(stringr)
+##library(tidyr)
+library(dplyr)
+```
+
+# Introduction
+
+**NOTE**: This version aims at histories above 90 years of age. Selection in all *Fob*s: All above age 85 (exact).
+
+```{r setAgeInterval}
+ageIvl <- c(90, 115) ## Noone live beyond age 115
+followUp <- 1 # Look ahead period years, we pick frpm ageIvl[1] - followUp to ageIvl[2]
+```
+
+We used the
+knowledge that the yearly *lisa* data relates to *December 31* the given
+year, while the *FoB* data relate to the date *November 1* the given
+year. These facts have the following implications for our plan: For *FoB*
+data, we follow individuals from their appearance in a FoB until the next
+FoB five years later, even if they do not appear there. The exception is if
+they die within five years after the first appearance. So, *fob60* induces
+a time interval *from November 1, 1960 to October 31, 1965*, and so on. 
+Since we do not have birth dates but only birth year and quarter,
+we decide to use as birthdate the *midpoint of the birth quarter*. 
+We work with all ages 0-110, and only as the final step, `age.window` is called.
+
+The following FoBs are treated similarly, until we reach the Fob
+in 1985. Since the first *lisa* date is December 31, 1986, this "fob
+interval" starts at November 1, 1985, and ends at December 31, 1986, that
+is, it is 14 months long. 
+
+New version: 'putonssyk' changed. (24 May 2018)
+
+# Fixed data
+
+We start with the *inddata* file and treat it as a *fixed-data*
+file (no time-varying info). 
+We find the birth dates (see above), death dates (for those who are observed die), and the "date last seen".
+
+Note that 37 individuals in *inddata* have no information at all, so they are removed.
+
+```{r frominddata, cache = TRUE}
+inddata <- readRDS("../Data/U18006_RDS/inddata.rds")
+inddata <- inddata[inddata$FODELSEAR > 1850, ]
+inddata <- inddata[inddata$FODELSEAR < 2015 - ageIvl[1] + followUp + 1, ] # So reach 'ageIvl[1]' before 2015-01-01.
+per <- inddata[!is.na(inddata$KON) & !is.na(inddata$FODELSEAR), ] # Not necessary ...
+per$birthdate <- per$FODELSEAR + 0.125  +  (per$FODELSEKVARTAL - 1) / 4
+rm(inddata)
+```
+
+Now we put on *death date*, *death cause*, and *KOMMUN of death*, from *socstyr*, on *per*:
+
+```{r styronper, cache = TRUE}
+dors <- readRDS("../Data/U18006_RDS/dors.rds")
+indx <- match(per$LINNEID, dors$LINNEID)
+per$DODSDAT <- dors$DODSDAT[indx]
+fixd <- !is.na(per$DODSDAT) & (per$DODSDAT < 1960010) # Only month and year
+per$DODSDAT[fixd] <- per$DODSDAT[fixd] * 100 + 15
+per$deathdate <- as.numeric(skum::tillTid(per$DODSDAT))
+per$dodsKOMMUN <- dors$KOMMUN[indx]
+per$dodsALDER <- dors$ALDER[indx]
+per$ULORSAK <- dors$ULORSAK[indx]
+rm(dors)
+```
+
+# The Lisa data
+
+The *lisa* data is slightly simpler because it is yearly with cutoff dates 12-31/01-01 each new-year. It starts off at 1987-01-01 (lisa1986) and ends at 2013-12-31 (lisa2013). So the time interval a *lisa* covers is *AR + 1*! But note that the *socstyr* data now cover deaths *before January 1, 2015, so *lisa2013* is now in effect useful to us.  
+
+```{r lisadat}
+lisa <- readRDS("../Data/U18006_RDS/lisa.rds")[, c("LINNEID", "AR", "KOMMUN", "CIV")]
+##lisa <- lisa[(lisa$KOMMUN %in% ourkom) & (lisa$LINNEID %in% per$LINNEID), ]
+lisa <- lisa[(lisa$LINNEID %in% per$LINNEID), ]
+ar <- 1986:2013
+days <- as.numeric(skum::tillTid(paste(ar, "1231", sep = "")))
+```
+
+Get *birthdate* and *deathdate* from *per*:
+
+```{r getbirthdate}
+indx <- match(lisa$LINNEID, per$LINNEID)
+
+lisa$birthdate <- per$birthdate[indx]
+lisa$deathdate <- per$deathdate[indx]
+```
+
+Create individual Lisas (1986, 1987, ..., 2013)
+
+```{r rawlisa, cache = FALSE}
+source("R/extractLisa.R")
+n <- length(ar)
+##fobbar <- vector(mode = "list", length = n)
+##names(fobbar) <- paste("fob", (ar %% 100), sep = "")
+dors <- readRDS("../Data/U18006_RDS/dors.rds")
+
+for (i in 1:n){
+    lisadata <- extractLisa(ar[i], followUp = 1, data = lisa)
+    ##fobbar[[n]] <- extractFob(ar[n], followUp = 11 + 61 / 365, data = fob)
+    ##fobdata <- do.call(rbind, fobbar)
+    ###rm(fobbar)
+    lisadata <- lisadata[order(lisadata$LINNEID, lisadata$enter), ]
+    ##
+    rownames(lisadata) <- 1:NROW(lisadata)
+
+    indx <- match(lisadata$LINNEID, dors$LINNEID)
+    lisadata$ULORSAK <- str_trim(as.character(dors$ULORSAK[indx]))
+    ##putONssyk3
+    ##source("R/ssyk3TOhisclass.R")
+    ##ssyk3TOhisclass
+    ##lisadata$hisclass <- ssyk3TOhisclass(lisadata$SSYK3)
+    ##is.na(lisadata$hisclass) <- with(lisadata, is.na(hisclass) |
+      ##                                 (!is.na(hisclass) & hisclass == -1))
+    ##lisadata$id <- lisadata$LINNEID
+    ##load("../../Data/sex.rda")
+
+    indx <- match(lisadata$LINNEID, per$LINNEID)
+    lisadata$KON <- per$KON[indx]
+    ##fobb$urban <- fobb$FORSAMLING %in% c(248001, 248002, 284004, 284005,  ## This must be fixed!
+      ##                                   248011, 248201, 248204)
+    civst <- numeric(NROW(lisadata))
+    civst[lisadata$CIV %in% 1] <- 1 # Ogift
+    civst[lisadata$CIV %in% c(2, 5)] <- 2 # Gift, sambo
+    civst[lisadata$CIV %in% c(3, 4, 6, 7)] <- 3 # skild, änka
+    is.na(civst) <- civst == 0
+    lisadata$civst <- civst
+    ##fobb$civst <- factor(civst,
+      ##                   labels = c("unmarried", "married", "prev.married"))
+    lisadata$sex <- lisadata$KON
+    ##levels(fobb$sex) <- c("male", "female")
+    lisadata <- lisadata[, c("LINNEID", "AR", "KOMMUN", "birthdate", "sex",
+                             "enter", "exit", "event",
+                             "civst", "ULORSAK")]
+    lisadata <- eha::age.window(lisadata, ageIvl)
+    saveRDS(lisadata, file = paste("data/LISA/lisa", ar[i], ".rds", sep = ""))
+    rm(lisadata)
+}
+```
+

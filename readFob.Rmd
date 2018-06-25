@@ -1,0 +1,157 @@
+---
+title: "Read data from Fob"
+author: "Göran Broström"
+date: "June 20, 2018"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+fontsize: 11pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = FALSE,cache.lazy = FALSE)
+options(stringsAsFactors = FALSE)
+library(stringr)
+##library(tidyr)
+##library(dplyr)
+```
+
+# Introduction
+
+**NOTE**: This version aims at histories above 90 years of age. Selection in all *Fob*s: All above age 85 (exact).
+
+```{r setAgeInterval}
+ageIvl <- c(90, 115) ## Noone live beyond age 115
+followUp <- 5 # Look ahead period years, we pick frpm ageIvl[1] - followUp to ageIvl[2]
+```
+
+We used the
+knowledge that the yearly *lisa* data relates to *December 31* the given
+year, while the *FoB* data relate to the date *November 1* the given
+year. These facts have the following implications for our plan: For *FoB*
+data, we follow individuals from their appearance in a FoB until the next
+FoB five years later, even if they do not appear there. The exception is if
+they die within five years after the first appearance. So, *fob60* induces
+a time interval *from November 1, 1960 to October 31, 1965*, and so on. 
+Since we do not have birth dates but only birth year and quarter,
+we decide to use as birthdate the *midpoint of the birth quarter*. 
+
+**Check this:**
+*We work with all ages 0--115, and only as the final step, `age.window` is called.*
+
+The following FoBs are treated similarly, until we reach the Fob
+in 1985. Since the first *lisa* date is December 31, 1986, this "fob
+interval" starts at November 1, 1985, and ends at December 31, 1986, that
+is, it is 14 months long. 
+
+
+# Fixed data
+
+We start with the *inddata* file and treat it as a *fixed-data*
+file (no time-varying info). 
+We find the birth dates (see above), death dates (for those who are observed die), and the "date last seen".
+
+Note that 37 individuals in *inddata* have no information at all, so they are removed.
+
+```{r frominddata, cache = FALSE}
+inddata <- readRDS("../Data/U18006_RDS/inddata.rds")
+inddata <- inddata[inddata$FODELSEAR > 1850, ] # Get rid of 5 extremes.
+inddata <- inddata[inddata$FODELSEAR < 1987 - ageIvl[1] + followUp + 1, ] # So reach 'ageIvl[1]' before 1987-01-01.
+per <- inddata[!is.na(inddata$KON) & !is.na(inddata$FODELSEAR), ] # Not necessary ...
+per$birthdate <- per$FODELSEAR + 0.125  +  (per$FODELSEKVARTAL - 1) / 4
+rm(inddata)
+```
+
+Now we put on *death date*, *death cause*, and *KOMMUN of death*, from *socstyr*, on *per*:
+
+```{r styronper, cache = FALSE}
+dors <- readRDS("../Data/U18006_RDS/dors.rds")
+indx <- match(per$LINNEID, dors$LINNEID)
+per$DODSDAT <- dors$DODSDAT[indx]
+fixd <- !is.na(per$DODSDAT) & (per$DODSDAT < 1960010) # Only month and year
+per$DODSDAT[fixd] <- per$DODSDAT[fixd] * 100 + 15
+per$deathdate <- as.numeric(skum::tillTid(per$DODSDAT))
+per$dodsKOMMUN <- dors$KOMMUN[indx]
+per$dodsALDER <- dors$ALDER[indx]
+per$ULORSAK <- dors$ULORSAK[indx]
+rm(dors)
+```
+
+# The FoBs
+
+Through the *FoB*s we have snapshots of the population on *November 1* the years *1960(5)1990*, giving the dates (decimal form). We create one file for each year (*FOB*)
+
+```{r days, cache = FALSE}
+fob <- readRDS("../Data/U18006_RDS/fob.rds")
+fob <- fob[fob$LINNEID %in% per$LINNEID, ]
+ar <- seq(1960, 1990, by = 5)
+days <- as.numeric(skum::tillTid(paste(ar, "1101", sep = "")))
+##days
+```
+
+
+Get `birthdate` from `per`.
+
+```{r getbirthdateanddathdate}
+indx <- match(fob$LINNEID, per$LINNEID)
+fob$birthdate <- per$birthdate[indx]
+fob$deathdate <- per$deathdate[indx]
+fob$ULORSAK <- per$ULORSAK[indx]
+```
+
+Create individual Fobs (1960, 1965, etc):
+
+```{r rawfob, cache = FALSE}
+source("R/extractFob.R")
+n <- length(ar)
+##fobbar <- vector(mode = "list", length = n)
+##names(fobbar) <- paste("fob", (ar %% 100), sep = "")
+##dors <- readRDS("data/dors.rds")
+
+for (i in 1:n){
+    fobb <- extractFob(ar[i], followUp, data = fob)
+    fobb <- fobb[fobb$birthdate < days[i] - ageIvl[1] + followUp, ]
+    ##fobb <- eha::age.window(fobb, c(ageIvl[1] - followUp, ageIvl[2])) # NEW!!!!!
+    ##fobbar[[n]] <- extractFob(ar[n], followUp = 11 + 61 / 365, data = fob)
+    ##fobdata <- do.call(rbind, fobbar)
+    ###rm(fobbar)
+    fobb <- fobb[order(fobb$LINNEID, fobb$enter), ]
+    ##
+    rownames(fobb) <- 1:NROW(fobb)
+
+    ##fobb$id <- fobb$LINNEID
+    ##load("../../Data/sex.rda")
+
+    indx <- match(fobb$LINNEID, per$LINNEID)
+    fobb$KON <- per$KON[indx]
+    ##fobb$urban <- fobb$FORSAMLING %in% c(248001, 248002, 284004, 284005,  ## This must be fixed!
+      ##                                   248011, 248201, 248204)
+    civst <- numeric(NROW(fobb))
+    if (ar[i] > 1968){ # 1970, 1975, ..., 1990:
+        civst[fobb$CIVIL %in% c(0, 5)] <- 1 # Ogift
+        civst[fobb$CIVIL %in% c(2, 7)] <- 2 # Gift, sambo
+        civst[fobb$CIVIL %in% c(1, 3, 4, 6, 8, 9)] <- 3 # skild, änka
+    }else if (ar[i] == 1960){
+        civst[fobb$CIVIL %in% 3]  <- 1
+        civst[fobb$CIVIL %in% 2]  <- 2
+        civst[fobb$CIVIL %in% c(1, 4, 5)] <- 3
+    }else if (ar[i] == 1965){
+        civst[fobb$CIVIL %in% 1] <- 1
+        civst[fobb$CIVIL %in% 5] <- 2
+        civst[fobb$CIVIL %in% c(3, 4, 6)] <- 3
+    }
+    is.na(civst) <- civst == 0
+    fobb$civst <- civst
+    ##fobb$civst <- factor(civst,
+      ##                   labels = c("unmarried", "married", "prev.married"))
+    fobb$sex <- fobb$KON
+    ##levels(fobb$sex) <- c("male", "female")
+    fobb <- fobb[, c("LINNEID", "AR", "KOMMUN", "birthdate", "sex", "enter", "exit", "event",
+                     "civst", "ULORSAK")]
+    fobb <- eha::age.window(fobb, c(ageIvl[1], ageIvl[2]))
+    saveRDS(fobb, file = paste("data/FOB/fobb", ar[i], ".rds", sep = ""))
+    rm(fobb)
+}
+```
+
