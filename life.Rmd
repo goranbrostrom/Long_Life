@@ -104,6 +104,7 @@ for (i in 1:n){
     lisa[[i]] <- readRDS(lst[i])
 }
 lisall <- do.call(rbind, lisa)
+lisall$sex <- factor(lisall$sex, labels = c("male", "female"))
 ```
 
 ## Cohort 90+
@@ -125,7 +126,7 @@ for (i in 1:n){
 lisall100 <- age.window(lisall, c(100, 115))
 yrs <- 1986:1999
 n <- length(yrs)
-par(mfrow = c(5, 3))
+oldpar <- par(mfrow = c(5, 3))
 for (i in 1:n){
     ids <- unique(lisall100$LINNEID[lisall100$birthdate >  yrs[i] - 100 & lisall100$birthdate <= yrs[i] - 99])
     fit <- coxph(Surv(enter, exit, event) ~ strata(sex), data = lisall100[lisall100$LINNEID %in% ids, ])
@@ -137,6 +138,18 @@ lisall100all <- lisall100[lisall100$LINNEID %in% ids, ]
     fit <- coxph(Surv(enter, exit, event) ~ strata(sex), data = lisall100all)
     plot(survfit(fit, start.time = 100), xlim = c(100, 113), mark.time = FALSE, col = c("blue", "red"), fun = "cumhaz", main = "1986-1999", ylim = c(0, 6.5),
          xlab = "Age", ylab = "Cumulative hazards")
+par(oldpar)
 ```
 
+## Check distribution
+
+```{r checkDist}
+fit <- coxreg(Surv(enter - 100, exit - 100, event) ~ 1, 
+              data = lisall100all[lisall100all$sex == "female", ])
+fit1 <- phreg(Surv(enter - 100, exit - 100, event) ~ 1, 
+              data = lisall100all[lisall100all$sex == "female", ],
+              shape = 1)
+check.dist(fit, fit1, main = "Women", col = c(1, 2))
+axis(1, at = c(0, 5, 10, 15), labels = c(100, 105, 110, 115))
+```
 
