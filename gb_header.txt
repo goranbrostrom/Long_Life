@@ -1,0 +1,17 @@
+\usepackage[british]{babel}
+\usepackage{graphicx,hyperref,url}
+\usepackage{fontawesome}
+\usepackage{hyperref}
+\usepackage{adjustbox}
+\hypersetup{colorlinks=true,allcolors=blue}
+
+\usetheme{metropolis}
+\title{Life is short}
+\subtitle{But limited}
+\date{August 30, 2018}
+
+\author[Brostrom]{
+  G\"oran Brostr\"om", Ume{\aa} University \\
+  {\small \faEnvelope: \url{goran.brostrom@umu.se}} \\
+  {\small \faGithub:  \url{github.com/goranbrostrom}}
+}
