@@ -16,12 +16,41 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ## svt.se, October 2016
 
-
-\includegraphics[width=\textwidth]{PDF/svt.png}
+\includegraphics[width = \textwidth]{PDF/svt.png}
 
 ## Jeanne Calment, age 122.
 
 \includegraphics[width = \textwidth]{PDF/NYT.png}
+
+## Nature, 2016
+
+\includegraphics[width=\textwidth]{PDF/nat16.png}
+
+## Nature, 2017
+
+\includegraphics[width=\textwidth]{PDF/nat17.png}
+
+## Nature, 2017
+
+\begin{columns}
+
+\begin{column}{0.46\textwidth}
+
+\includegraphics[width=\textwidth]{PDF/discnat1.png}
+
+\end{column}
+
+\begin{column}{0.46\textwidth}
+
+\includegraphics[width=\textwidth]{PDF/discnat2.png}
+
+\end{column}
+
+\end{columns}
+
+## Nature 2017
+
+\includegraphics[width=\textwidth]{PDF/discnat1.png}
 
 ## The Human Mortality Database
 
