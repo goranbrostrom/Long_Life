@@ -1,14 +1,46 @@
 ---
-output: 
+output:
   beamer_presentation:
-      includes:
-          in_header: gb_header.txt
-          before_body: gb_beforebody.txt
+    fig_caption: no
+    fig_width: 5
+    includes:
+      before_body: gb_beforebody.txt
+      in_header: gb_header.txt
+  ioslides_presentation: default
+  slidy_presentation: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## In the News 2016
+## svt.se, October 2016
 
+
+\includegraphics[width=\textwidth]{PDF/svt.png}
+
+## Jeanne Calment, age 122.
+
+\includegraphics[width = \textwidth]{PDF/NYT.png}
+
+## The Human Mortality Database
+
+```{r dataswed, echo=FALSE}
+deaths <- read.table("data/HMD/Deaths_1x1.txt", header = TRUE, skip = 3, stringsAsFactors = FALSE, na.strings = ".")
+##head(deaths)
+expos <- read.table("data/HMD/Exposures_1x1.txt", header = TRUE, skip = 3, stringsAsFactors = FALSE, na.strings = ".")
+##head(expos)
+rates <- read.table("data/HMD/Mx_1x1.txt", header = TRUE, skip = 3, stringsAsFactors = FALSE, na.strings = ".")
+str(rates)
+```
+
+## The International Database on Longevity
+
+```{r idldata, fig.width=10}
+usa <- read.table("data/IDL/usa.csv", header = TRUE, sep = ";")
+x <- with(usa, tapply(Age.days. / 365.25, Date.of.death, max))
+plot(1980:2003, x, xlab = "Year", ylab = "Age", ylim = c(110, 120), col = "blue")
+abline(h = 110)
+abline(h = 111:120, lty = 3, col = "green")    
+with(usa, points(Date.of.death, Age.days. / 365.25, cex = 0.25, col = "blue"))
+```

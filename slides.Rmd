@@ -2,7 +2,7 @@
 title: "Life is short"
 subtitle: "But unlimited?"
 author: "Göran Broström"
-date: "`r Sys.Date()`"
+date: "August 30, 2018"
 output:
   xaringan::moon_reader:
     lib_dir: libs
@@ -11,15 +11,15 @@ output:
       highlightLines: true
       countIncrementalSlides: false
 ---
-background-image:  url(PDF/dong16.pdf)
+background-image:  url(PDF/pk.jpg)
 background-position: 50% 50%
 background-size: cover
-class: inverse
 
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE)
 ```
 
+Photo by Pawel Kadysz on Unsplash
 # ojj
 
 ???
@@ -36,9 +36,7 @@ hej
 ### /ʃæ.'riŋ.ɡæn/
 
 ---
-background-image: url(PDF/Jeanne-Calment-1996.jpg)
-background-position: 50% 50%
-class: center, bottom, inverse
+![calment](PDF/NYT.png)
 
 # You only live once!
 

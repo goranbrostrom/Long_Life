@@ -7,11 +7,11 @@
 
 \usetheme{metropolis}
 \title{Life is short}
-\subtitle{But limited}
+\subtitle{But unlimited}
 \date{August 30, 2018}
 
 \author[Brostrom]{
-  G\"oran Brostr\"om", Ume{\aa} University \\
+  G\"oran Brostr\"om, CEDAR, Ume{\aa} University \\
   {\small \faEnvelope: \url{goran.brostrom@umu.se}} \\
   {\small \faGithub:  \url{github.com/goranbrostrom}}
 }
