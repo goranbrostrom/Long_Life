@@ -52,6 +52,16 @@ knitr::opts_chunk$set(echo = FALSE)
 
 \includegraphics[width=\textwidth]{PDF/discnat1.png}
 
+## Dong, Milholland & Vijg, Nature 2016.
+
+\includegraphics[width=\textwidth, height=0.9\textheight]{PDF/repage.png}
+
+## James Vaupel, off the record
+
+"I was outraged that Nature, a journal I highly respect, would publish such a travesty" 
+
+He was upset, but for a wrong reason.
+
 ## The Human Mortality Database
 
 ```{r dataswed, echo=FALSE}
