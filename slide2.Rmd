@@ -55,13 +55,12 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ## Dong, Milholland & Vijg, Nature 2016.
 
-\includegraphics[width=\textwidth, height=0.9\textheight]{PDF/repage.png}
+\includegraphics[width=\textwidth, height=0.9\textheight]{myfigs/repage.png}
 
 ## James Vaupel, off the record
 
-"I was outraged that Nature, a journal I highly respect, would publish such a travesty" 
-
-He was upset, but for a wrong reason.
+\Large
+"I was outraged that Nature, a journal I highly respect, would publish such a travesty." 
 
 ## The Human Mortality Database
 
@@ -77,13 +76,35 @@ str(rates)
 ## The International Database on Longevity
 
 ```{r idldata, fig.width=10}
-usa <- read.table("data/IDL/usa.csv", header = TRUE, sep = ";")
-uk <- read.table("data/IDL/uk.csv", header = TRUE, sep = ";")
-japan <- read.table("data/IDL/japan.csv", header = TRUE, sep = ";")
-france <- read.table("data/IDL/france.csv", header = TRUE, sep = ";")
-x <- with(usa, tapply(Age.days. / 365.25, Date.of.death, max))
-plot(1980:2003, x, xlab = "Year", ylab = "Age", ylim = c(110, 120), col = "blue")
+library(lubridate)
+options(stringsAsFactors = FALSE)
+usa <- read.table("data/IDL/USA/usa.csv", header = TRUE, sep = ";")
+usa$year <- usa$Date.of.death
+usa$age <- usa$Age.days. / 365.25
+usa$country = "usa"
+uk <- read.table("data/IDL/UK/uk.csv", header = TRUE, sep = ";")
+uk$age <- uk$Age.days. / 365.25
+uk$year <- year(as.Date(uk$Date.of.death, format = "%d/%m/%Y"))
+uk$country <- "uk"
+japan <- read.table("data/IDL/Japan/japan.csv", header = TRUE, sep = ";")
+japan$year <- year(as.Date(japan$Date.of.death, format = "%d/%m/%Y"))
+japan$age <- japan$Age.days. / 365.25
+japan$country <- "japan"
+france <- read.table("data/IDL/France/france.csv", header = TRUE, sep = ";")
+france$year <- year(as.Date(france$Date.of.death, format = "%d/%m/%Y"))
+france$age <- france$Age.days. / 365.25
+france$country <- "france"
+all <- rbind(usa[, c("year", "age", "Sex", "country")],
+             uk[, c("year", "age", "Sex", "country")],
+             france[, c("year", "age", "Sex", "country")],
+             japan[, c("year", "age", "Sex", "country")])
+```
+
+```{r plotthem}
+x <- with(all, tapply(age, year, max))
+years <- sort(unique(all$year))
+plot(years, x, xlab = "Year", ylab = "Age", ylim = c(110, 123), col = "blue")
 abline(h = 110)
 abline(h = 111:120, lty = 3, col = "green")    
-with(usa, points(Date.of.death, Age.days. / 365.25, cex = 0.25, col = "blue"))
+## with(usa, points(Date.of.death, Age.days. / 365.25, cex = 0.25, col = "blue"))
 ```
