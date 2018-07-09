@@ -7,7 +7,7 @@
 
 \usetheme{metropolis}
 \title{Life is short}
-\subtitle{But unlimited}
+\subtitle{But unlimited?}
 \date{August 30, 2018}
 
 \author[Brostrom]{
