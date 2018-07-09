@@ -16,8 +16,9 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ## svt.se, October 2016
 
-\includegraphics[width = \textwidth]{PDF/svt.png}
-
+\begin{center}
+\includegraphics[width = \textwidth]{myfigs/svt3.png}
+\end{center}
 ## Jeanne Calment, age 122.
 
 \includegraphics[width = \textwidth]{PDF/NYT.png}
@@ -77,6 +78,9 @@ str(rates)
 
 ```{r idldata, fig.width=10}
 usa <- read.table("data/IDL/usa.csv", header = TRUE, sep = ";")
+uk <- read.table("data/IDL/uk.csv", header = TRUE, sep = ";")
+japan <- read.table("data/IDL/japan.csv", header = TRUE, sep = ";")
+france <- read.table("data/IDL/france.csv", header = TRUE, sep = ";")
 x <- with(usa, tapply(Age.days. / 365.25, Date.of.death, max))
 plot(1980:2003, x, xlab = "Year", ylab = "Age", ylim = c(110, 120), col = "blue")
 abline(h = 110)
