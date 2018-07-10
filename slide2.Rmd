@@ -21,15 +21,15 @@ knitr::opts_chunk$set(echo = FALSE)
 \end{center}
 ## Jeanne Calment, age 122.
 
-\includegraphics[width = \textwidth]{PDF/NYT.png}
+\includegraphics[width = \textwidth]{myfigs/NYT.png}
 
 ## Nature, 2016
 
-\includegraphics[width=\textwidth]{PDF/nat16.png}
+\includegraphics[width=\textwidth]{myfigs/nat16.png}
 
 ## Nature, 2017
 
-\includegraphics[width=\textwidth]{PDF/nat17.png}
+\includegraphics[width=\textwidth]{myfigs/nat17.png}
 
 ## Nature, 2017
 
@@ -37,13 +37,13 @@ knitr::opts_chunk$set(echo = FALSE)
 
 \begin{column}{0.46\textwidth}
 
-\includegraphics[width=\textwidth]{PDF/discnat1.png}
+\includegraphics[width=\textwidth]{myfigs/discnat1.png}
 
 \end{column}
 
 \begin{column}{0.46\textwidth}
 
-\includegraphics[width=\textwidth]{PDF/discnat2.png}
+\includegraphics[width=\textwidth]{myfigs/discnat2.png}
 
 \end{column}
 
@@ -51,7 +51,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ## Nature 2017
 
-\includegraphics[width=\textwidth]{PDF/discnat1.png}
+\includegraphics[width=\textwidth]{myfigs/discnat1.png}
 
 ## Dong, Milholland & Vijg, Nature 2016.
 
