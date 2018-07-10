@@ -153,3 +153,25 @@ check.dist(fit, fit1, main = "Women", col = c(1, 2))
 axis(1, at = c(0, 5, 10, 15), labels = c(100, 105, 110, 115))
 ```
 
+# FOB data
+
+```{r readfob}
+lst <- list.files("data/FOB/")
+lst = paste("data/FOB", lst, sep = "/")
+n <- length(lst)
+fob <- vector(mode = "list", length = n)
+for (i in 1:n){
+    fob[[i]] <- readRDS(lst[i])
+}
+foball <- do.call(rbind, fob)
+foball$sex <- factor(foball$sex, labels = c("male", "female"))
+```
+
+# Combine FOB and Lisa
+
+```{r fobolisa}
+alla <- rbind(foball, lisall)
+length(unique(alla$LINNEID))
+sum(alla$event)
+```
+
