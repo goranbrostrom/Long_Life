@@ -10,7 +10,7 @@ library(skum)
 ```
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Introduction
@@ -159,13 +159,27 @@ axis(1, at = c(0, 5, 10, 15), labels = c(100, 105, 110, 115))
 lst <- list.files("data/FOB/")
 lst = paste("data/FOB", lst, sep = "/")
 n <- length(lst)
-fob <- vector(mode = "list", length = n)
-for (i in 1:n){
+fob <- vector(mode = "list", length = n-1)
+for (i in 1:(n-1)){
     fob[[i]] <- readRDS(lst[i])
 }
+fob[[n-1]] <- eha::cal.window(fob[[n-1]], c(1985.834, 1987))
 foball <- do.call(rbind, fob)
 foball$sex <- factor(foball$sex, labels = c("male", "female"))
 ```
+
+Check for duplicates:
+
+```{r isdupl}
+dupl <- readRDS("../Forskning/Data/U18006_RDS/nypr.rds")
+dupl <- dupl$LINNEID
+dufo <- foball[foball$LINNEID %in% dupl, ]
+flux <- function(x) max(x) - min(x)
+x <- with(dufo, tapply(birthdate, LINNEID, flux))
+max(abs(x))
+```
+
+There are no duplicates in *foball*. Neither for *lisall*.
 
 # Combine FOB and Lisa
 
@@ -173,5 +187,23 @@ foball$sex <- factor(foball$sex, labels = c("male", "female"))
 alla <- rbind(foball, lisall)
 length(unique(alla$LINNEID))
 sum(alla$event)
+```
+Let us make *one spell* per *LINNEID*:
+
+```{r onespell}
+alla <- alla[order(alla$LINNEID, alla$enter), ]
+indx <- tapply(alla$LINNEID, alla$LINNEID)
+menter <- with(alla, tapply(enter, LINNEID, min))
+alla$menter <- menter[indx]
+mexit <- with(alla, tapply(exit, LINNEID, max))
+alla$mexit <- mexit[indx]
+mevent <- with(alla, tapply(event, LINNEID, max))
+alla$mevent <- mevent[indx]
+alla <- alla[!duplicated(alla$LINNEID),]
+alla$enter <- alla$menter
+alla$exit <- alla$mexit
+alla$event <- alla$mevent
+alla$menter <- alla$mexit <- alla$menter <- NULL
+saveRDS(alla, file = "alla.rds")
 ```
 
