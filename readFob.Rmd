@@ -1,7 +1,7 @@
 ---
 title: "Read data from Fob"
 author: "Göran Broström"
-date: "June 20, 2018"
+date: "July 12, 2018"
 output:
   html_document:
     df_print: paged
@@ -19,10 +19,10 @@ library(stringr)
 
 # Introduction
 
-**NOTE**: This version aims at histories above 90 years of age. Selection in all *Fob*s: All above age 85 (exact).
+**NOTE**: This version aims at histories above 60 years of age. Selection in all *Fob*s: All above age 85 (exact).
 
 ```{r setAgeInterval}
-ageIvl <- c(90, 115) ## Noone live beyond age 115
+ageIvl <- c(60, 115) ## Noone lives beyond age 115
 followUp <- 5 # Look ahead period years, we pick frpm ageIvl[1] - followUp to ageIvl[2]
 ```
 
@@ -150,7 +150,7 @@ for (i in 1:n){
     fobb <- fobb[, c("LINNEID", "AR", "KOMMUN", "birthdate", "sex", "enter", "exit", "event",
                      "civst", "ULORSAK")]
     fobb <- eha::age.window(fobb, c(ageIvl[1], ageIvl[2]))
-    saveRDS(fobb, file = paste("data/FOB/fobb", ar[i], ".rds", sep = ""))
+    saveRDS(fobb, file = paste("data/FOB/fobb", ar[i], "_", ageIvl[1], ".rds", sep = ""))
     rm(fobb)
 }
 ```

@@ -19,10 +19,10 @@ library(dplyr)
 
 # Introduction
 
-**NOTE**: This version aims at histories above 90 years of age. Selection in all *Fob*s: All above age 85 (exact).
+**NOTE**: This version aims at histories above 60 years of age. Selection in all *Fob*s: All above age 85 (exact).
 
 ```{r setAgeInterval}
-ageIvl <- c(90, 115) ## Noone live beyond age 115
+ageIvl <- c(60, 115) ## Noone live beyond age 115
 followUp <- 1 # Look ahead period years, we pick frpm ageIvl[1] - followUp to ageIvl[2]
 ```
 
@@ -145,7 +145,7 @@ for (i in 1:n){
                              "enter", "exit", "event",
                              "civst", "ULORSAK")]
     lisadata <- eha::age.window(lisadata, ageIvl)
-    saveRDS(lisadata, file = paste("data/LISA/lisa", ar[i], ".rds", sep = ""))
+    saveRDS(lisadata, file = paste("data/LISA/lisa", ar[i], "_", ageIvl[1], ".rds", sep = ""))
     rm(lisadata)
 }
 ```
