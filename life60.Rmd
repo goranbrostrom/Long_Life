@@ -1,0 +1,210 @@
+---
+title: "Life is short"
+author: "Göran Broström"
+date: "July 12, 2018"
+output: html_document
+---
+
+```{r datain}
+library(skum)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+This is a preparation for a talk with the title
+
+"life is short but unlimited"
+
+that will be given (for the first time) at CEDAR, Umeå University, on the 30th of August, 2018, at 1300 hours. Inspired by the paper
+
+In this version we create a file with all with age above 60.
+
+# High ages at death, Skellefteå and Umeå 1801--1950
+
+```{r maxyearskum}
+years <- 1801:1950
+ages <- numeric(length(years))
+dobs <- obs[obs$sluttyp == 2, c("sex", "birthdate", "exit", "region")]
+dobs$deathdate <- dobs$birthdate + dobs$exit
+dobs$event <- 1
+for (i in seq_along(years)){
+    nu <- dobs[floor(dobs$deathdate) == years[i], "exit"]
+    ages[i] <- max(nu)
+}
+plot(years, ages, type = "p", col = "blue", xlab = "Year", ylab = "Max death age") 
+abline(h = 100, col = "red")
+```
+
+# The Human Mortality Database
+
+```{r dataswed}
+deaths <- read.table("data/HMD/Deaths_1x1.txt", header = TRUE, skip = 3, stringsAsFactors = FALSE, na.strings = ".")
+##head(deaths)
+expos <- read.table("data/HMD/Exposures_1x1.txt", header = TRUE, skip = 3, stringsAsFactors = FALSE, na.strings = ".")
+##head(expos)
+rates <- read.table("data/HMD/Mx_1x1.txt", header = TRUE, skip = 3, stringsAsFactors = FALSE, na.strings = ".")
+str(rates)
+```
+
+We note that the variable *Age* is a *character variable*: It is because the last, open class has the label "110+". We change that to "110" and make *Age* a numeric variable.
+
+```{r makeAge_numeric}
+deaths$Age[deaths$Age == "110+"] <- "110"
+deaths$Age <- as.integer(deaths$Age)
+##
+expos$Age[expos$Age == "110+"] <- "110"
+expos$Age <- as.integer(expos$Age)
+##
+rates$Age[rates$Age == "110+"] <- "110"
+rates$Age <- as.integer(rates$Age)
+```
+
+## Females
+
+```{r females}
+females <- rates[["Female"]]
+fem <- matrix(females, nrow = 111)
+colnames(fem) <- 1751:2016
+rownames(fem) <- 0:110
+```
+
+## Calendar time averages 
+
+The table with ten-year agerages is loaded.
+
+```{r averrate}
+aver <- read.table("data/HMD/Mx_1x10.txt", header = TRUE, skip = 3, stringsAsFactors = FALSE, na.strings = ".")
+afemales <- aver[["Female"]]
+afem <- matrix(afemales, nrow = 111)
+rownames(fem) <- 0:110
+```
+
+# The International Database on Longevity
+
+```{r idldata}
+usa <- read.table("data/IDL/USA/usa.csv", header = TRUE, sep = ";")
+x <- with(usa, tapply(Age.days. / 365.25, Date.of.death, max))
+plot(1980:2003, x, xlab = "Year", ylab = "Age", ylim = c(110, 120), col = "blue")
+abline(h = 110)
+abline(h = 111:120, lty = 3, col = "green")    
+with(usa, points(Date.of.death, Age.days. / 365.25, cex = 0.25, col = "blue"))
+```
+
+# Lisa data
+
+```{r readlisa}
+lst <- list.files("data/LISA60/")
+lst = paste("data/LISA60", lst, sep = "/")
+n <- length(lst)
+lisa <- vector(mode = "list", length = n)
+for (i in 1:n){
+    lisa[[i]] <- readRDS(lst[i])
+}
+lisall <- do.call(rbind, lisa)
+lisall$sex <- factor(lisall$sex, labels = c("male", "female"))
+```
+
+## Cohort 90+
+
+```{r coh90, fig.height = 12, eval = FALSE}
+yrs <- 1986:1997
+n <- length(yrs)
+par(mfrow = c(4, 3))
+for (i in 1:n){
+    ids <- unique(lisall$LINNEID[lisall$birthdate > yrs[i] - 90 & lisall$birthdate <= yrs[i] - 89])
+    fit <- coxph(Surv(enter-90, exit-90, event) ~ strata(sex), data = lisall[lisall$LINNEID %in% ids, ])
+    plot(survfit(fit), mark.time = FALSE, col = c("blue", "red"), fun = "cumhaz", main = yrs[i])
+}
+```
+
+## Cohort 100+
+
+```{r coh100, fig.height = 12, eval = FALSE}
+lisall100 <- age.window(lisall, c(100, 115))
+yrs <- 1986:1999
+n <- length(yrs)
+oldpar <- par(mfrow = c(5, 3))
+for (i in 1:n){
+    ids <- unique(lisall100$LINNEID[lisall100$birthdate >  yrs[i] - 100 & lisall100$birthdate <= yrs[i] - 99])
+    fit <- coxph(Surv(enter, exit, event) ~ strata(sex), data = lisall100[lisall100$LINNEID %in% ids, ])
+    plot(survfit(fit, start.time = 100), xlim = c(100, 113), mark.time = FALSE, col = c("blue", "red"), fun = "cumhaz", main = yrs[i], ylim = c(0, 6.5),
+         xlab = "Age")
+}
+ids <- unique(lisall100$LINNEID[lisall100$birthdate >  yrs[1] - 100 & lisall100$birthdate <= yrs[n] - 99])
+lisall100all <- lisall100[lisall100$LINNEID %in% ids, ]
+    fit <- coxph(Surv(enter, exit, event) ~ strata(sex), data = lisall100all)
+    plot(survfit(fit, start.time = 100), xlim = c(100, 113), mark.time = FALSE, col = c("blue", "red"), fun = "cumhaz", main = "1986-1999", ylim = c(0, 6.5),
+         xlab = "Age", ylab = "Cumulative hazards")
+par(oldpar)
+```
+
+## Check distribution
+
+```{r checkDist, eval = FALSE}
+fit <- coxreg(Surv(enter - 100, exit - 100, event) ~ 1, 
+              data = lisall100all[lisall100all$sex == "female", ])
+fit1 <- phreg(Surv(enter - 100, exit - 100, event) ~ 1, 
+              data = lisall100all[lisall100all$sex == "female", ],
+              shape = 1)
+check.dist(fit, fit1, main = "Women", col = c(1, 2))
+axis(1, at = c(0, 5, 10, 15), labels = c(100, 105, 110, 115))
+```
+
+# FOB data
+
+```{r readfob}
+lst <- list.files("data/FOB60/")
+lst = paste("data/FOB60", lst, sep = "/")
+n <- length(lst)
+fob <- vector(mode = "list", length = n-1)
+for (i in 1:(n-1)){
+    fob[[i]] <- readRDS(lst[i])
+}
+fob[[n-1]] <- eha::cal.window(fob[[n-1]], c(1985.834, 1987))
+foball <- do.call(rbind, fob)
+foball$sex <- factor(foball$sex, labels = c("male", "female"))
+```
+
+Check for duplicates:
+
+```{r isdupl}
+dupl <- readRDS("../Data/U18006_RDS/nypr.rds")
+dupl <- dupl$LINNEID
+dufo <- foball[foball$LINNEID %in% dupl, ]
+flux <- function(x) max(x) - min(x)
+x <- with(dufo, tapply(birthdate, LINNEID, flux))
+max(abs(x))
+```
+
+There are no duplicates in *foball*. Neither for *lisall*.
+
+# Combine FOB and Lisa
+
+```{r fobolisa}
+alla <- rbind(foball, lisall)
+length(unique(alla$LINNEID))
+sum(alla$event)
+```
+Let us make *one spell* per *LINNEID*:
+
+```{r onespell}
+alla <- alla[order(alla$LINNEID, alla$enter), ]
+indx <- tapply(alla$LINNEID, alla$LINNEID)
+menter <- with(alla, tapply(enter, LINNEID, min))
+alla$menter <- menter[indx]
+mexit <- with(alla, tapply(exit, LINNEID, max))
+alla$mexit <- mexit[indx]
+mevent <- with(alla, tapply(event, LINNEID, max))
+alla$mevent <- mevent[indx]
+alla <- alla[!duplicated(alla$LINNEID),]
+alla$enter <- alla$menter
+alla$exit <- alla$mexit
+alla$event <- alla$mevent
+alla$menter <- alla$mexit <- alla$menter <- NULL
+saveRDS(alla, file = "alla60.rds")
+```
+
