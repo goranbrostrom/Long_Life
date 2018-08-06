@@ -11,8 +11,76 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, fig.width = 11, warning = FALSE)
 ```
+
+## Extremes, Decembern 2017
+
+\includegraphics[width=\textwidth]{myfigs/rootzen.png}
+
+Received from: [Zentralblatt für Mathematik](https://zbmath.org).
+
+## My review
+
+\includegraphics[width=\textwidth]{myfigs/zbmath.png}
+
+## What it is about
+
+*   Is human life unlimited?
+*   Are there any differences in survival at extreme age between 
+    *   women and men, 
+    *   different socioeconomic groups, 
+    *   etc?n
+
+<!--
+*   What will the record life-length be the coming 25 years?    
+*   Etc.
+
+But **most important**: **Bad statistics** in previous research.
+-->
+## Chiyo Miyako, Japan
+
+\includegraphics[width=\textwidth]{myfigs/ChiyoMiyako2.jpg}
+
+World's oldest person since 21 April, 2018. Age: 117.
+
+(Age on picture: 114.)
+
+## Aftonbladet, 27 juli 2018
+
+\includegraphics[width=\textwidth]{myfigs/chiyo_dead.png}
+
+**Now oldest:** *Kane Tanaka*, Japan (115 years and 205 days).
+
+## SCB data on old age mortality
+
+Deaths by age and year:n
+
+```{r scb}
+library(Sweden)
+x <- getDeaths(ages = 97:100, years = 2007:2014)
+rownames(x) = c(97:99, "100+")
+knitr::kable(x)         
+```
+
+Not very useful (100+).
+
+## International Database on Longevity
+
+[https://www.supercentenarians.org](https://www.supercentenarians.org)
+
+## Gerontology Research Group database
+
+[http://www.grg.org](http://www.grg.org)
+
+\includegraphics[width=\textwidth]{myfigs/grg.png}
+
+## The Human Mortality Database
+
+[https://www.mortality.org](https://www.mortality.org)
+
+*   Contains no individual data.
+*   But very useful tables.
 
 ## svt.se, October 2016
 
@@ -26,6 +94,104 @@ knitr::opts_chunk$set(echo = FALSE)
 ## Nature, 2016
 
 \includegraphics[width=\textwidth]{myfigs/nat16.png}
+
+## Dong, Milholland & Vijg, Nature 2016.
+
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\includegraphics[width=\textwidth, height=0.7\textheight]{myfigs/repage.png}
+\end{column}
+\begin{column}{0.45\textwidth}
+\scriptsize
+\begin{itemize}
+\item International Database on Longevity
+\item Highest age at death each year
+\item Linear regression with breakpoint
+\item Increasing trend broken!
+\end{itemize}
+
+\end{column}
+\end{columns}
+
+\begin{center}
+Problems with this "statistical" analysis?
+\end{center}
+
+## Dong, Milholland & Vijg, Nature 2016: Problems.
+
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\includegraphics[width=\textwidth, height=0.7\textheight]{myfigs/repage.png}
+\end{column}
+\begin{column}{0.45\textwidth}
+\scriptsize
+\begin{itemize}
+\item International Database on Longevity
+\item Highest age at death each year
+\item Linear regression with breakpoint
+\item Increasing trend broken!
+\end{itemize}
+
+\end{column}
+\end{columns}
+
+\scriptsize
+
+*   Ad hoc choice of cutpoint.
+*   Very short time series to confirm a trend break.
+*   What about the survivors?
+*   Data are extreme values: full data?
+
+## The full data
+
+```{r readidl, fig.width = 13, fig.height = 6}
+par(cex = 1.5)
+usa <- read.table("data/IDL/USA/usa.csv", header = TRUE, sep = ";")
+usa$year <- usa$Date.of.death
+usa$age <- usa$Age.days. / 365.2425
+usa$date <- usa$year + runif(NROW(usa), 0, 0.999)
+with(usa, plot(date, age, pch = ".", cex = 3, las = 1, xlim = c(1968, 2008), ylim = c(110, 123), 
+     xlab = "Date", ylab = "Age", axes = FALSE))
+axis(1, at = c(1968, 1980, 1987, 1996, 2004, 2007), las = 2)
+axis(2, las = 1)
+box()
+##
+uk <- read.table("data/IDL/UK/uk.csv", header = TRUE, sep = ";")
+uk$age <- uk$Age.days. / 365.2425
+uk$year <- as.numeric(substr(uk$Date.of.death, 7, 10))
+uk$date <- uk$year + runif(NROW(uk), 0, 0.999)
+points(uk$date, uk$age, col = "red", pch = ".", cex = 3)
+##
+france <- read.table("data/IDL/France/france.csv", header = TRUE, sep = ";")
+france$age <- france$Age.days. / 365.2425
+france$year <- as.numeric(substr(france$Date.of.death, 7, 10))
+france$date <- france$year + runif(NROW(france), 0, 0.999)
+points(france$date, france$age, col = "blue", pch = ".", cex = 3)
+japan <- read.table("data/IDL/Japan/japan.csv", header = TRUE, sep = ";")
+japan$age <- japan$Age.days. / 365.2425
+japan$year <- as.numeric(substr(japan$Date.of.death, 7, 10))
+japan$date <- japan$year + runif(NROW(japan), 0, 0.999)
+points(japan$date, japan$age, col = "orange", pch = ".", cex = 3)
+abline(v = 1968:2007)
+text(2003, 122.5, "< Jeanne Calment", col = "blue")
+jeanne <- france[france$age > 120, c("age", "date")]
+up <- jeanne$age - 110
+x <- c(jeanne$date - up, jeanne$date)
+y <- c(jeanne$age - up, jeanne$age)
+lines(x, y, lty = 3)
+```
+
+\scriptsize
+
+\begin{tabular}{l|rr}
+Country & First & Last \\ \hline
+UK      & 1968 & 2006 \\
+USA     & 1980 & 2003 \\
+France  & 1987 & 2003  \\
+Japan & 1996 & 2005 \\
+\end{tabular}
+
+
 
 ## Nature, 2017
 
@@ -49,19 +215,17 @@ knitr::opts_chunk$set(echo = FALSE)
 
 \end{columns}
 
+<!--
 ## Nature 2017
 
 \includegraphics[width=\textwidth]{myfigs/discnat1.png}
 
-## Dong, Milholland & Vijg, Nature 2016.
+-->
 
-\includegraphics[width=\textwidth, height=0.9\textheight]{myfigs/repage.png}
 
-## James Vaupel, off the record
 
-\Large
-"I was outraged that Nature, a journal I highly respect, would publish such a travesty." 
 
+<!--
 ## The Human Mortality Database
 
 ```{r dataswed, echo=FALSE}
@@ -103,8 +267,383 @@ all <- rbind(usa[, c("year", "age", "Sex", "country")],
 ```{r plotthem}
 x <- with(all, tapply(age, year, max))
 years <- sort(unique(all$year))
-plot(years, x, xlab = "Year", ylab = "Age", ylim = c(110, 123), col = "blue")
+plot(years, x, xlab = "Year", ylab = "Age", ylim = c(110, 123), col = "blue", axes = FALSE)
+axis(1, at = c(1968, 1980, 1990, 2003, 2006))
+axis(2, las = 1)
+box()
 abline(h = 110)
-abline(h = 111:120, lty = 3, col = "green")    
-## with(usa, points(Date.of.death, Age.days. / 365.25, cex = 0.25, col = "blue"))
+abline(h = 111:122, lty = 3, col = "green")    
+abline(v = c(1968, 2006))
+with(all, points(year, age, cex = 0.25, col = "blue"))
+with(all[all$country =="usa", ], points(jitter(year, amount = 0.25), age, cex = 0.25, col = "red"))
 ```
+
+
+## Swedish data, 110+
+
+```{r sweddat}
+s105 <- readRDS("mydata/per_105.rds")
+s110 <- eha::age.window(s105, c(110, 120))
+##with(s110[s110$event == 1, ], plot(firstSeen, firstSeen -  birthdate))
+dead <- s110[s110$event == 1, ]
+x1 <- dead$firstSeen
+x2 <- dead$deathdate
+dur <- x2 - x1
+y2 <- dead$exit
+y1 <- y2 - dur
+plot(c(x1[1], x2[1]), c(y1[1], y2[1]), type = "l", xlim = c(1969, 2015), ylim = c(105, 115),
+     xlab = "Date", ylab = "Age")
+for (i in 2:NROW(dead)){
+    lines(c(x1[i], x2[i]), c(y1[i], y2[i]))
+}
+cens <- s110[s110$event == 0, ]
+x1 <- cens$firstSeen
+x2 <- cens$lastSeen
+dur <- x2 - x1
+y2 <- cens$exit
+y1 <- y2 - dur
+for (i in 1:NROW(cens)){
+    lines(c(x1[i], x2[i]), c(y1[i], y2[i]), col = "red")
+}
+males <- cens[cens$KON == 1, ]
+points(males$lastSeen, males$exit, col = "red")
+males <- dead[dead$KON == 1, ]
+points(males$deathdate, males$exit, col = "black")
+abline(h = 110)
+abline(v = c(1969, 2014, 2015), lty = 2)
+```
+-->
+
+## Rootzén and Zholud
+
+Two serious blows:
+
+1.   Extreme values do not behave like "normal" data.
+2.   The data suffer from length bias.
+
+and one conclusion:
+
+1.   There is no aging after age 110!
+
+## The Generalized Pareto (GP) distribution
+
+\begin{equation*}
+h(x; (\gamma, \sigma)) = \frac{1}{\sigma (1 + \gamma x / \sigma)_{+}}
+\end{equation*}
+
+```{r gphaz, fig.width = 11, fig.height = 4}
+oldpar <- par(mfrow = c(1, 3), lwd = 1.5, cex.main = 2)
+h <- function(x){
+    den <- 1 + gamma * x / sigma
+    den[den <= 0] <- 0
+    1 / (sigma * den)
+}
+gamma <- -0.25
+sigma = 1.3
+x <- seq(0, 10, length = 1000)
+y1 <- h(x)
+plot(x, y1, type = "l", ylim = c(0, 5), col = "blue", axes = FALSE, xlab = "Age", 
+     ylab = "Force of mortality", main = expression(paste("(a) ", gamma,  " = -0.25")))
+axis(1, at = c(0, 5, 10), labels = c(110, 115, 120))
+axis(2, las = 1)
+box()
+abline(h = 0)
+gamma = 0
+y2 <- h(x)
+plot(x, y2, type = "l", ylim = c(0, max(y2) * 2), col = "blue", axes = FALSE, xlab = "Age",
+     ylab = "Force of mortality", main = expression(paste("(b) ", gamma, " = 0")))
+axis(1, at = c(0, 5, 10), labels = c(110, 115, 120))
+axis(2, las = 1)
+box()
+abline(h = 0)
+gamma = 1
+y3 <- h(x)
+plot(x, y3, type = "l", ylim = c(0, max(y3)), col = "blue", axes = FALSE, xlab = "Age", 
+     ylab = "Force of mortality", main = expression(paste("(c) ", gamma, " = 1")))
+axis(1, at = c(0, 5, 10), labels = c(110, 115, 120))
+axis(2, las = 1)
+box()
+abline(h = 0)
+par(oldpar)
+```
+
+\scriptsize
+
+(a) "Life is short"; (b) "Life is unlimited but short"; (c) "Life is unlimited".
+
+## Length-biased sampling
+
+\scriptsize
+
+Data are *left-truncated* and *right-truncated*:
+
+```{r trunc, fig.width = 9, fig.height = 4}
+plot(c(1999, 1999 + 5), c(110, 110 + 5), type = "l", col = "blue", lwd = 1.5, 
+     xlim = c(1990, 2010), ylim = c(110, 118), las = 1, xlab = "Date", ylab = "Age - 110",
+     axes = FALSE)
+axis(1, at = c(1993, 1995, 1999, 2003, 2005))
+axis(2, at = c(110, 114, 115, 118), las = 1, labels = c(0, 4, 5, 8))
+box()
+lines(c(1981, 1997), c(114, 114), lty = 3)
+abline(v = c(1995, 2005), lwd = 2)
+points(2004.25, 115.25, pch = "+", cex = 2)
+lines(c(1993, 1995), c(110, 112), lty = 2)
+lines(c(1983, 2004), c(115, 115), lty = 3)
+lines(c(1995, 1997), c(112, 114), col = "blue", lwd = 1.5)
+points(1997.25, 114.25, pch = "+", cex = 2)
+abline(h = 110)
+lines(c(2003, 2006), c(110, 113), lty = 2)
+points(2006.25, 113.25, pch = "+")
+```
+
+\begin{equation*}
+{\cal L} = \frac{{\cal P}(X_1 = 4)}{{\cal P}(2 < X_1 \le 12)}\times \frac{{\cal P}(X_2 = 5)}{{\cal P}(X_2 \le 6)}
+\end{equation*}
+
+*Inverse Probability Weighting* (Horwitz-Thomson, *JASA* 1952.)
+
+## Critique of Dong et. al. by Rootzen & Zholud
+
+\small
+
+*   The apparent trend break in the figure is
+an artifact caused by *inappropriate* combination of data from different time periods.
+
+*   The conclusion “our data strongly suggest that the
+duration of life is limited” is based on *wrong* and *misleading*
+analysis.
+
+## James Vaupel, later
+
+\Large
+"I was outraged that Nature, a journal I highly respect, would publish such a travesty." 
+
+## Swedish data, 110+
+
+```{r sweddat2}
+s105 <- readRDS("mydata/per_105.rds")
+s105$sex = factor(s105$KON, labels = c("Men", "Women"))
+
+s110 <- eha::age.window(s105, c(110, 120))
+source("R/drawLexis.R")
+n.m <- sum(s110$KON == 1)
+n.w <- sum(s110$KON == 2)
+```
+
+```{r lexis110}
+par(las = 1)
+with(s110[s110$KON == 2, ], drawLexis(enter, exit, event, birthdate, col = "red" , xlim = c(1969, 2015), ylim = c(110, 115)))
+with(s110[s110$KON == 1, ], drawLexis(enter, exit, event, birthdate, col = "blue", add = TRUE))
+abline(h = 110)
+abline(v = c(1969, 2014), lty = 3)
+abline(h = c(111, 112, 113, 114), lty = 3)
+legend("topleft", legend = c("Men", "Women"), col = c("blue", "red"), lty = 1)
+legend("top", legend = c("Dead", "Censored"), pch = c("+", "o"))
+```
+
+\scriptsize
+
+There are `r n.w` women and `r n.m` men.
+
+## Analysis, all data, 110+
+
+\scriptsize
+```{r swedanal, results= 'asis'}
+library(eha)
+fit <- coxreg(Surv(enter, exit, event) ~ sex + I(birthdate - 1900), data = s110)
+dr = drop1(fit, test = "Chisq")
+ltx(fit, dr = dr)
+```
+
+## Analysis, no censored observations, 110+
+
+\scriptsize
+```{r swedanal2, results= 'asis'}
+library(eha)
+fit <- coxreg(Surv(enter, exit, event) ~ sex + I(birthdate - 1900), data = s110[s110$event == 1, ])
+dr = drop1(fit, test = "Chisq")
+ltx(fit, dr = dr)
+```
+
+## Sweden, 105+
+
+```{r lexis105}
+par(las = 1)
+with(s105[s105$KON == 2, ], drawLexis(enter, exit, event, birthdate, col = "red" , xlim = c(1969, 2015), ylim = c(105, 115)))
+with(s105[s105$KON == 1, ], drawLexis(enter, exit, event, birthdate, col = "blue", add = TRUE))
+abline(h = 105)
+abline(v = c(1969, 2014), lty = 3)
+abline(h = c(106, 107, 108, 109, 110, 111, 112, 113, 114), lty = 3)
+legend("topleft", legend = c("Men", "Women"), col = c("blue", "red"), lty = 1)
+legend("top", legend = c("Dead", "Censored"), pch = c("+", "o"))
+```
+
+## Analysis, all data, 105+
+
+\scriptsize
+```{r swedanal105, results= 'asis'}
+library(eha)
+fit <- coxreg(Surv(enter, exit, event) ~ sex + I(birthdate - 1900), data = s105)
+dr = drop1(fit, test = "Chisq")
+ltx(fit, dr = dr)
+```
+
+## Analysis, no censored observations, 105+
+
+\scriptsize
+```{r swedanal1052, results= 'asis'}
+library(eha)
+fit <- coxreg(Surv(enter, exit, event) ~ sex + I(birthdate - 1900), data = s105[s105$event == 1, ])
+dr = drop1(fit, test = "Chisq")
+ltx(fit, dr = dr)
+```
+
+## Plots, all observations, 105+
+
+\scriptsize
+```{r swedanal105plot, fig.width = 11}
+library(eha)
+ss <- cal.window(s105, c(1969, 2014))
+fit <- coxreg(Surv(enter - 105, exit - 105, event) ~ strata(sex) + I(birthdate - 1900), data = ss)
+plot(fit, col = c("blue", "red"), lwd = 1.5)
+```
+
+\scriptsize
+
+*Exponential* distributions?
+
+## Graphical check of constant hazards, 105+
+
+```{r grchb, fig.width = 11}
+plot(fit, col = c("blue", "red"), lwd = 1.5)
+fit.w <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "Women", ], dist = "pch")
+fit.m <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "Men", ], dist = "pch")
+x <- seq(0, 8, length = 100)
+y <- x * fit.w$hazards[1, 1]
+lines(x, y, col = "darkred", lwd = 1.5)
+x <- seq(0, 6.2, length = 100)
+y <- x * fit.m$hazards[1, 1]
+lines(x, y, col = "darkblue", lwd = 1.5)
+##abline(0, fit.w$hazards[1, 1])
+#abline(0, fit.m$hazards[1, 1])
+```
+
+
+## Women, graphical check of constant hazard
+
+```{r graphcheck, fig.width = 11}
+par(lwd = 2)
+fit.e <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "Women", ], shape = 1)
+fit.c <- coxreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "Women", ])
+check.dist(fit.e, fit.c, main = "Exponential check", col = c("red", "darkred"))
+```
+
+## Formal test of exponentiality within Weibull family
+
+\scriptsize
+
+```{r formtestwei, results = 'asis'}
+fit.w <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "Women", ])
+dr <- drop1(fit.w, test = "Chisq")
+ltx(fit.w, dr = dr)
+```
+
+Test of **shape = 1**: *Not* rejected (in the family of Weibull distributions).
+
+## Formal test of exponentiality within Gompertz family
+
+\scriptsize
+
+```{r formtestgomp, results = 'asis'}
+fit.g <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "Women", ], dist = "gompertz", param = "rate")
+dr <- drop1(fit.g, test = "Chisq")
+ltx(fit.g, dr = dr)
+```
+
+Test of **rate = 1**: *Not* rejected (in the family of Gompertz distributions).
+
+## Weibull vs. Gompertz
+
+```{r weigom, fig.width = 11}
+oldpar <- par(mfrow = c(1, 2))
+check.dist(fit.w, fit.c)
+check.dist(fit.g, fit.c)
+```
+
+## Cohort version, 105+
+
+```{r cohortversion}
+lastyr <- 2004
+c105 <- s105[s105$birthdate + 105 > 1969 & s105$birthdate + 105 < lastyr, ]
+n.m <- sum(c105$KON == 1)
+n.w <- sum(c105$KON == 2)
+par(las = 1)
+with(c105[c105$KON == 2, ], drawLexis(enter, exit, event, birthdate, col = "red" , xlim = c(1969, 2015), 
+                                      ylim = c(105, 115), at = c(1969, 1980, 1990, lastyr)))
+with(c105[c105$KON == 1, ], drawLexis(enter, exit, event, birthdate, col = "blue", add = TRUE))
+abline(h = 105)
+##abline(v = c(1969, 2014), lty = 3)
+abline(h = c(106, 107, 108, 109, 110, 111, 112, 113, 114), lty = 3)
+legend("topleft", legend = c("Men", "Women"), col = c("blue", "red"), lty = 1)
+legend("top", legend = c("Dead", "Censored"), pch = c("+", "o"))
+lines(c(1969, 1969 + 8), c(105, 105 + 8), lwd = 2)
+lines(c(lastyr+0.1, lastyr + 0.1 + 8), c(105, 105 + 8), lwd = 2)
+```
+
+\scriptsize
+
+`r n.w` women, `r n.m` men.
+
+## Analysis
+
+\scriptsize
+
+```{r cohanal, results='asis'}
+c105$cohort <- cut(c105$birthdate + 105, c(1969, 1985, 1995, 2004))
+fit <- phreg(Surv(enter, exit, event) ~ cohort + sex, data = c105, dist = "pch")
+dr <- drop1(fit, test = "Chisq")
+ltx(fit, dr = dr)
+```
+
+
+Baseline hazard: `r round(fit$hazards[1, 1], 3)`.
+
+## Cumulative hazards by period by period
+
+```{r bysex}
+fit <- coxreg(Surv(enter, exit, event) ~ strata(cohort), data = c105)
+plot(fit, col = c("blue", "red", "black"), lwd = 1.5, lty = c(1, 2, 4), xlab = "Age", fn = "surv")
+abline(h = 0, v = 105)
+```
+
+## Skellefteå-Umeå data
+
+```{r skum, fig.width = 11}
+library(skum)
+o60 <- obs[obs$birthdate < 1850 & obs$birthdate > 1810 & obs$sluttyp != 0, ]
+o60$event <- o60$sluttyp == 2
+o60 <- age.window(o60, c(60, 120))
+o60$event <- o60$sluttyp == 2
+o60 <- o60[, c("id", "sex", "region", "birthdate", "enter", "exit", "event", "sluttyp")]
+indx <- tapply(o60$id, o60$id)
+o60$first <- tapply(o60$enter, o60$id, min)[indx]
+o60$last <- tapply(o60$exit, o60$id, max)[indx]
+o60$what <- tapply(o60$event, o60$id, max)[indx]
+o60 <- o60[order(o60$id, -o60$event, -o60$exit), ]
+o60 <- o60[!duplicated(o60$id), ]
+o60$event <- o60$what
+o60$enter <- o60$first
+o60$exit <- o60$last
+o60$first <- o60$last <- o60$what <- NULL
+o60 <- o60[o60$enter < o60$exit, ]
+fit <- coxreg(Surv(enter - 60, exit - 60, event) ~ region + sex + I(birthdate - 1840), data = o60)
+fit.g <- phreg(Surv(enter - 60, exit - 60, event) ~ region + sex + I(birthdate - 1840), data = o60, dist = "gompertz")    
+oldpar <- par(lwd = 2, las = 1)
+check.dist(fit, fit.g, col = c("red", "blue"))
+par(oldpar)
+abline(h = 0)
+abline(v = 0)
+abline(v = c(10, 20, 30, 40), lty = 3)
+
+```
+
