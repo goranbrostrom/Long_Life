@@ -1,9 +1,11 @@
 \usepackage[british]{babel}
+\usepackage{xcolor}
 \usepackage{graphicx,hyperref,url}
 \usepackage{fontawesome}
 \usepackage{hyperref}
 \usepackage{adjustbox}
 \hypersetup{colorlinks=true,allcolors=blue}
+
 
 \usetheme{metropolis}
 \title{Life is short}
@@ -13,5 +15,6 @@
 \author[Brostrom]{
   G\"oran Brostr\"om, CEDAR, Ume{\aa} University \\
   {\small \faEnvelope: \url{goran.brostrom@umu.se}} \\
-  {\small \faGithub:  \url{github.com/goranbrostrom}}
+  {\small \faGithub:  \url{github.com/goranbrostrom}} \\
+  {\small Web : \url{capa.ddb.umu.se}}
 }
