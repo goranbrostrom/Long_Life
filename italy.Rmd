@@ -2,11 +2,13 @@
 title: "Italien"
 author: "Göran Broström"
 date: "August 20, 2018"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
 # Read data
@@ -45,4 +47,16 @@ italy$exit <- italy$age.at.exit / 365.2425 - 105
 italy$enter <- italy$age.at.entry / 365.2425 - 105
 italy$event <- italy$status == 1
 ```
+
+# Analysis à la Italienne
+
+```{r analysis, results='asis'}
+library(eha)
+fit <- phreg(Surv(enter, exit, event) ~ as.factor(cohort) + sex, data = italy, dist = "gompertz", param = "rate")
+dr <- drop1(fit, test = "Chisq")
+ltx(fit, dr = dr)
+```
+
+and a graph:
+
 
