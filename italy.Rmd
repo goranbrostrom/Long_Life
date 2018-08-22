@@ -15,9 +15,13 @@ knitr::opts_chunk$set(echo = TRUE)
 library(readxl)
 ##dat <- read_xlsx("Italien/italy.xlsx", skip = 2, col_types = "text")
 dat <- read.table("Italien/italy.csv", header = TRUE, skip = 2, sep = ";", stringsAsFactors = FALSE,na.strings = "")
+bd <- as.Date(dat[[1]], format = "%m/%d/%Y")
+nab <- 1:23 # Is this correct??
+bd[nab] <- as.Date(dat[[1]][nab], format = "%d/%m/%Y") # Swap d and m!
 italy <- data.frame(
-    birthdate = as.Date(dat[[1]], format = "%d/%m/%Y"), ## NOTE!
-    birthdate2 = as.Date(dat[[1]], format = "%m/%d/%Y"), ## The 'correct' version?
+    birthdate = bd,
+    #birthdate = as.Date(dat[[1]], format = "%d/%m/%Y"), ## NOTE!
+    ##birthdate2 = as.Date(dat[[1]], format = "%m/%d/%Y"), ## The 'correct' version?
     deathdate = as.Date(dat[[2]], format = "%m/%d/%Y"), ## NOTE!!
     years = dat[[3]],
     days = dat[[4]],
@@ -37,5 +41,8 @@ italy$exit <- ifelse(italy$status == 0, T1, italy$exit)
 italy$age.at.exit <- italy$exit - italy$birth
 italy$age.at.entry <- ifelse(italy$birth + X0 <= T0, T0 - italy$birth, X0)
 italy$duration <- italy$age.at.exit - italy$age.at.entry
+italy$exit <- italy$age.at.exit / 365.2425 - 105
+italy$enter <- italy$age.at.entry / 365.2425 - 105
+italy$event <- italy$status == 1
 ```
 
