@@ -1,0 +1,41 @@
+---
+title: "Italien"
+author: "Göran Broström"
+date: "August 20, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Read data
+
+```{r readdata}
+library(readxl)
+##dat <- read_xlsx("Italien/italy.xlsx", skip = 2, col_types = "text")
+dat <- read.table("Italien/italy.csv", header = TRUE, skip = 2, sep = ";", stringsAsFactors = FALSE,na.strings = "")
+italy <- data.frame(
+    birthdate = as.Date(dat[[1]], format = "%d/%m/%Y"), ## NOTE!
+    birthdate2 = as.Date(dat[[1]], format = "%m/%d/%Y"), ## The 'correct' version?
+    deathdate = as.Date(dat[[2]], format = "%m/%d/%Y"), ## NOTE!!
+    years = dat[[3]],
+    days = dat[[4]],
+    sex = as.factor(dat$Sex),
+    cohort = dat$Cohort
+)
+## The Italian script:
+T0 <- as.numeric(as.Date("2009-1-1"))
+T1 <- as.numeric(as.Date("2015-12-31"))
+X0 <- round(105 * 365.25, 0)
+
+italy$birth <- as.numeric(italy$birthdate)
+italy$exit <- as.numeric(italy$deathdate)
+italy$status <- ifelse(is.na(italy$exit), 0, 1)
+italy$exit <- ifelse(italy$status == 0, T1, italy$exit)
+
+italy$age.at.exit <- italy$exit - italy$birth
+italy$age.at.entry <- ifelse(italy$birth + X0 <= T0, T0 - italy$birth, X0)
+italy$duration <- italy$age.at.exit - italy$age.at.entry
+```
+
