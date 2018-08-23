@@ -8,13 +8,13 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE,message=FALSE)
 ```
 
 # Read data
 
 ```{r readdata}
-library(readxl)
+##library(readxl)
 ##dat <- read_xlsx("Italien/italy.xlsx", skip = 2, col_types = "text")
 dat <- read.table("Italien/italy.csv", header = TRUE, skip = 2, sep = ";", stringsAsFactors = FALSE,na.strings = "")
 bd <- as.Date(dat[[1]], format = "%m/%d/%Y")
@@ -52,11 +52,22 @@ italy$event <- italy$status == 1
 
 ```{r analysis, results='asis'}
 library(eha)
-fit <- phreg(Surv(enter, exit, event) ~ as.factor(cohort) + sex, data = italy, dist = "gompertz", param = "rate")
+fit <- phreg(Surv(enter, exit, event) ~ I(cohort - 1904) + sex, data = italy, dist = "gompertz", param = "rate")
 dr <- drop1(fit, test = "Chisq")
 ltx(fit, dr = dr)
 ```
 
 and a graph:
 
+```{r plotgraph}
+fit.c <- coxreg(Surv(enter, exit, event) ~ I(cohort - 1904) + sex, data = italy)
+check.dist(fit, fit.c)
+```
+
+Check with an exponential (constant hazard) model:
+
+```{r expmod}
+fit.e <- phreg(Surv(enter, exit, event) ~ I(cohort - 1904) + sex, data = italy, dist = "weibull", shape = 1)
+check.dist(fit.e, fit.c, main = "Exponential")
+```
 
