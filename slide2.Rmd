@@ -501,6 +501,10 @@ lines(x, y, col = "red", lwd = 3)
 \Large
 "I was \textcolor{red}{outraged} that \textcolor{red}{Nature}, a journal I highly respect, would publish such a \textcolor{red}{travesty}." 
 
+## How could this happen?
+
+See [http://capa.ddb.umu.se/ds](http://capa.ddb.umu.se/ds)
+
 ## Data from FOB and Lisa
 
 \scriptsize
