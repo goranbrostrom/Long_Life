@@ -46,6 +46,7 @@ italy$duration <- italy$age.at.exit - italy$age.at.entry
 italy$exit <- italy$age.at.exit / 365.2425 - 105
 italy$enter <- italy$age.at.entry / 365.2425 - 105
 italy$event <- italy$status == 1
+saveRDS(italy, file = "italy.rds")
 ```
 
 # Analysis à la Italienne

@@ -39,6 +39,15 @@ Received from: [Zentralblatt für Mathematik](https://zbmath.org).
 
 But **most important**: **Bad statistics** in previous research.
 -->
+
+## Broken Limits to Life Expectancy: Science 2002
+
+\includegraphics[width=0.9\textwidth]{myfigs/oeppenvaupel.png}
+
+\scriptsize
+
+Authors: James Vaupel and Jim Oeppen.
+
 ## Chiyo Miyako, Japan
 
 \includegraphics[width=\textwidth]{myfigs/ChiyoMiyako2.jpg}
