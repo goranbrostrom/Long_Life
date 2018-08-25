@@ -567,8 +567,8 @@ abline(h = 105)
 
 ```{r sweddat2}
 s105 <- readRDS("mydata/per_105.rds")
-s105$sex = factor(s105$KON, labels = c("Men", "Women"))
-
+s105$sex = factor(s105$KON, labels = c("man", "woman"))
+s105$sex <- relevel(s105$sex, ref = "woman")
 s110 <- eha::age.window(s105, c(110, 120))
 s110 <- eha::cal.window(s110, c(1969, 2014))
 source("R/drawLexis.R")
@@ -679,8 +679,8 @@ plot(fit, col = c("blue", "red"), lwd = 1.5)
 
 ```{r grchb, fig.width = 11}
 plot(fit, col = c("blue", "red"), lwd = 1.5)
-fit.w <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "Women", ], dist = "pch")
-fit.m <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "Men", ], dist = "pch")
+fit.w <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "woman", ], dist = "pch")
+fit.m <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "man", ], dist = "pch")
 x <- seq(0, 8, length = 100)
 y <- x * fit.w$hazards[1, 1]
 lines(x, y, col = "darkred", lwd = 1.5)
@@ -696,8 +696,8 @@ lines(x, y, col = "darkblue", lwd = 1.5)
 
 ```{r graphcheck, fig.width = 11}
 par(lwd = 2)
-fit.e <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "Women", ], shape = 1)
-fit.c <- coxreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "Women", ])
+fit.e <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "woman", ], shape = 1)
+fit.c <- coxreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "woman", ])
 check.dist(fit.e, fit.c, main = "Exponential check", col = c("red", "darkred"))
 ```
 
@@ -706,7 +706,7 @@ check.dist(fit.e, fit.c, main = "Exponential check", col = c("red", "darkred"))
 \scriptsize
 
 ```{r formtestwei, results = 'asis'}
-fit.w <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "Women", ])
+fit.w <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "woman", ])
 dr <- drop1(fit.w, test = "Chisq")
 ltx(fit.w, dr = dr)
 ```
@@ -718,20 +718,23 @@ Test of **shape = 1**: *Not* rejected (in the family of Weibull distributions).
 \scriptsize
 
 ```{r formtestgomp, results = 'asis'}
-fit.g <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "Women", ], dist = "gompertz", param = "rate")
+fit.g <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "woman", ], dist = "gompertz", param = "rate")
 dr <- drop1(fit.g, test = "Chisq")
 ltx(fit.g, dr = dr)
 ```
 
 Test of **rate = 1**: *Not* rejected (in the family of Gompertz distributions).
 
+<!--
 ## Weibull vs. Gompertz
 
-```{r weigom, fig.width = 11}
+```{r weigom, fig.width = 11,eval=FALSE}
 oldpar <- par(mfrow = c(1, 2))
 check.dist(fit.w, fit.c)
 check.dist(fit.g, fit.c)
+par(oldpar)
 ```
+-->
 
 ## Cohort version, 105+
 
@@ -757,19 +760,17 @@ lines(c(lastyr+0.1, lastyr + 0.1 + 8), c(105, 105 + 8), lwd = 2)
 
 `r n.w` women, `r n.m` men.
 
-## Analysis
+## Cohort Analysis
 
 \scriptsize
 
 ```{r cohanal, results='asis'}
 c105$cohort <- cut(c105$birthdate + 105, c(1969, 1985, 1995, 2004))
-fit <- phreg(Surv(enter, exit, event) ~ cohort + sex, data = c105, dist = "pch")
+fit <- phreg(Surv(enter, exit, event) ~ cohort + sex, data = c105, dist = "gompertz", param = "rate")
 dr <- drop1(fit, test = "Chisq")
 ltx(fit, dr = dr)
 ```
 
-
-Baseline hazard: `r round(fit$hazards[1, 1], 3)`.
 
 ## Cumulative hazards by period
 
@@ -783,6 +784,32 @@ abline(h = 0, v = 105)
 
 \includegraphics[width=\textwidth]{myfigs/plateau.png}
 
+## Italy results
+
+```{r italydata, results='asis'}
+italy <- readRDS("italy.rds")
+levels(italy$sex) <- c("woman", "man")
+##relevel(italy$sex, ref = "man")
+fit <- phreg(Surv(enter, exit, event) ~ I(cohort - 1900) + sex, data = italy, dist = "gompertz", param = "rate")
+dr <- drop1(fit, test = "Chisq")
+ltx(fit, dr = dr)
+```
+
+## Sweden and Italy
+
+```{r swedit, results='asis'}
+it <- italy[, c("enter", "exit", "event", "sex", "cohort")]
+it$country <- "Italy"
+sw <- s105[, c("enter", "exit", "event", "sex", "FODELSEAR")]
+sw$cohort <- floor(sw$FODELSEAR)
+sw$FODELSEAR <- NULL
+sw$country <- "Sweden"
+swit <- rbind(sw, it)
+swit$country <- factor(swit$country)
+fit <- phreg(Surv(enter, exit, event) ~ country + I(cohort - 1900) + sex, data = swit, dist = "gompertz", param = "rate")
+dr = drop1(fit, test = "Chisq")
+ltx(fit, dr = dr)
+```
 
 ## Skellefteå-Umeå data
 
