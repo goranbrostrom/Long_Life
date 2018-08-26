@@ -451,59 +451,6 @@ duration of life is limited” is based on \textcolor{red}{wrong and misleading 
 *   \textcolor{red}{No difference} between countries, sexes, birth cohorts.
 
 
-## Expectation of extremes
-
-```{r}
-sur <- function(x, n = 1) 1 - (1 - exp(-x / 1.34))^n
-Esur <- function(m){
-    if (m <= 0){
-        res <- 0 #integrate(sur, 0, Inf, n = 1)$value
-    }else{
-        res <- integrate(sur, 0, Inf, n = m)$value
-    }
-    res
-}
-
-nn <- 1:100
-yval <- numeric(100)
-for (i in nn){
-    yval[i] <- Esur(i)
-}
-plot(nn, yval, ylim = c(0, 7), xlab = "No. of observations", ylab = "E(max(obs))", type = "b", col = "blue", )
-##print(deaths)
-```
-
-## The original plot, expectation added
-
-```{r orig, fig.width = 11, fig.height = 8, eval = TRUE}
-par(cex = 2)
-deaths <- with(all, table(year))
-yl <- numeric(length(deaths))
-for (i in 1:length(deaths)){
-    if (deaths[i] == 0){
-        yl[i] <- 110
-    }else{
-        yl[i] <- Esur(deaths[i]) + 110
-    }
-}
-plot(names(deaths), yl, type = "l", col = "black", ylim = c(110, 123), lwd = 3, xlab = "Year", 
-     ylab = "Max(Age at death)", lty = 1, axes = FALSE)
-axis(1, at = c(1968, 1980, 1995, 2006))
-axis(2, las = 1)
-box()
-y1 <- year[1:(1996-1968)] * 0.1531 - 191.7
-
-maxage <- with(all, tapply(age, year, max))
-points(names(maxage), maxage, col = "red", lwd = 2)
-points(names(maxage)[1:21], maxage[1:21], col = "blue",lwd = 2)
-x <- c(1968, 1994)
-y <- 0.1531 * x - 191.07
-lines(x, y, col = "blue", lwd = 3)
-x <- c(1995, 2006)
-y <- 667.5 - 0.2762 * x
-lines(x, y, col = "red", lwd = 3)
-```
-
 
 ## James Vaupel, later
 
@@ -511,6 +458,23 @@ lines(x, y, col = "red", lwd = 3)
 "I was \textcolor{red}{outraged} that \textcolor{red}{Nature}, a journal I highly respect, would publish such a \textcolor{red}{travesty}." 
 
 ## How could this happen?
+
+\begin{itemize}
+\item \alert{No statisticians} involved.
+\begin{itemize}
+\item \alert{Demographic research} is performed by people from sociology, psychology, economy, etc. with \alert{inadequate statistical training}.
+\item the same holds for \alert{editors of journals} from the same fields.
+\end{itemize}
+\item Too \alert{powerful} statistical \alert{software}.
+\begin{itemize}
+\item "Who needs a statistician?"
+\item "I have read the manual."
+\end{itemize}
+\item Failure to understand the \alert{GIGO principle} ("Garbage In, Garbage Out").
+\begin{itemize}
+\item There is always \alert{some} Garbage Out.
+\end{itemize}
+\end{itemize}
 
 See [http://capa.ddb.umu.se/ds](http://capa.ddb.umu.se/ds)
 
@@ -650,6 +614,7 @@ fit <- coxreg(Surv(enter, exit, event) ~ sex + I(birthdate - 1900), data = s105)
 dr = drop1(fit, test = "Chisq")
 ltx(fit, dr = dr)
 ```
+
 
 ## Analysis, no censored observations, 105+
 
@@ -804,11 +769,14 @@ sw <- s105[, c("enter", "exit", "event", "sex", "FODELSEAR")]
 sw$cohort <- floor(sw$FODELSEAR)
 sw$FODELSEAR <- NULL
 sw$country <- "Sweden"
+sw$enter <- sw$enter - 105
+sw$exit <- sw$exit - 105
 swit <- rbind(sw, it)
 swit$country <- factor(swit$country)
-fit <- phreg(Surv(enter, exit, event) ~ country + I(cohort - 1900) + sex, data = swit, dist = "gompertz", param = "rate")
+fit <- phreg(Surv(enter, exit, event) ~ strata(country) + I(cohort - 1900) + sex, data = swit, dist = "gompertz", param = "rate")
 dr = drop1(fit, test = "Chisq")
-ltx(fit, dr = dr)
+##ltx(fit, dr = dr)
+plot(fit, fn = "sur", col = c("red", "blue"))
 ```
 
 ## Skellefteå-Umeå data
@@ -840,5 +808,60 @@ abline(h = 0)
 abline(v = 0)
 abline(v = c(10, 20, 30, 40), lty = 3)
 
+```
+
+## Extra material
+
+## Expectation of extremes
+
+```{r}
+sur <- function(x, n = 1) 1 - (1 - exp(-x / 1.34))^n
+Esur <- function(m){
+    if (m <= 0){
+        res <- 0 #integrate(sur, 0, Inf, n = 1)$value
+    }else{
+        res <- integrate(sur, 0, Inf, n = m)$value
+    }
+    res
+}
+
+nn <- 1:100
+yval <- numeric(100)
+for (i in nn){
+    yval[i] <- Esur(i)
+}
+plot(nn, yval, ylim = c(0, 7), xlab = "No. of observations", ylab = "E(max(obs))", type = "b", col = "blue", )
+##print(deaths)
+```
+
+## The original plot, expectation added
+
+```{r orig, fig.width = 11, fig.height = 8, eval = TRUE}
+par(cex = 2)
+deaths <- with(all, table(year))
+yl <- numeric(length(deaths))
+for (i in 1:length(deaths)){
+    if (deaths[i] == 0){
+        yl[i] <- 110
+    }else{
+        yl[i] <- Esur(deaths[i]) + 110
+    }
+}
+plot(names(deaths), yl, type = "l", col = "black", ylim = c(110, 123), lwd = 3, xlab = "Year", 
+     ylab = "Max(Age at death)", lty = 1, axes = FALSE)
+axis(1, at = c(1968, 1980, 1995, 2006))
+axis(2, las = 1)
+box()
+y1 <- year[1:(1996-1968)] * 0.1531 - 191.7
+
+maxage <- with(all, tapply(age, year, max))
+points(names(maxage), maxage, col = "red", lwd = 2)
+points(names(maxage)[1:21], maxage[1:21], col = "blue",lwd = 2)
+x <- c(1968, 1994)
+y <- 0.1531 * x - 191.07
+lines(x, y, col = "blue", lwd = 3)
+x <- c(1995, 2006)
+y <- 667.5 - 0.2762 * x
+lines(x, y, col = "red", lwd = 3)
 ```
 
