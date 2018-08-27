@@ -53,20 +53,21 @@ Authors: James Vaupel and Jim Oeppen. \alert{Gain / year: } 3 months.
 ```{r gainperyear}
 library(Sweden)
 library(eha)
+##source("R/mpch.R")
 fd <- getDeaths(sex = "females")
-fp <- getPop(sex = "females", years = 1968:2017)
+fp <- getPop(sex = "females", years = 1968:2014)
 frat <- fd / fp
 md <- getDeaths(sex = "males")
-mp <- getPop(sex = "males", years = 1968:2017)
+mp <- getPop(sex = "males", years = 1968:2014)
 mrat <- md / mp
 cut <- 1:100
-favg <- numeric(50)
-mavg <- numeric(50)
-for (i in 1:50){
+favg <- numeric(47)
+mavg <- numeric(47)
+for (i in 1:47){
     favg[i] <- mpch(cuts = cut, levels = frat[, i] )
     mavg[i] <- mpch(cuts = cut, levels = mrat[, i] )    
 }
-year <- 1968:2017
+year <- 1968:2014
 plot(year, favg, type = "b", col = "red", ylim = c(70, 85), axes = FALSE, xlab = "Year", ylab = "Age")
 axis(1, at = c(seq(1968, 2008, by = 10), 2017))
 axis(2)
@@ -82,19 +83,19 @@ abline(h = c(70, 75, 80, 85), lty = 3)
 ```{r gainperyear90}
 library(Sweden)
 fd <- getDeaths(sex = "females", ages = 90:100)
-fp <- getPop(sex = "females", years = 1968:2017, ages = 90:100)
+fp <- getPop(sex = "females", years = 1968:2014, ages = 90:100)
 frat <- fd / fp
 md <- getDeaths(sex = "males", ages = 90:100)
-mp <- getPop(sex = "males", years = 1968:2017, ages = 90:100)
+mp <- getPop(sex = "males", years = 1968:2014, ages = 90:100)
 mrat <- md / mp
 cut <- 1:10
-favg <- numeric(50)
-mavg <- numeric(50)
-for (i in 1:50){
+favg <- numeric(47)
+mavg <- numeric(47)
+for (i in 1:47){
     favg[i] <- mpch(cuts = cut, levels = frat[, i] )
     mavg[i] <- mpch(cuts = cut, levels = mrat[, i] )    
 }
-year <- 1968:2017
+year <- 1968:2014
 plot(year, favg + 90, type = "b", col = "red", ylim = c(90, 95), axes = FALSE, xlab = "Year", ylab = "Age")
 axis(1, at = c(seq(1968, 2008, by = 10), 2017))
 axis(2)
@@ -622,9 +623,20 @@ There are `r n.w` women and `r n.m` men.
 library(eha)
 ##with(s110, plot(Surv(enter - 110, exit - 110, event), mark.time = FALSE, fun = "cumhaz"))
 fit.c <- coxreg(Surv(enter-110, exit-110, event) ~ 1, data = s110)
-fit.w <- phreg(Surv(enter-110, exit-110, event) ~ 1, data = s110, dist = "pch")
+fit.g <- phreg(Surv(enter-110, exit-110, event) ~ 1, data = s110, dist = "gompertz", param = "rate")
 par(lwd = 2)
-check.dist(fit.c, fit.w, main = "Exponential distribution", col = c("red", "blue"))
+plot(fit.c, axes = FALSE, xlab = "Age", ylab = "Cum. hazards")
+tic <- 0:5
+axis(1, at = tic, labels = tic + 110)
+axis(2, las = 1)
+box()
+x <- seq(0, 5, length = 100)
+shp <- fit.g$coefficients["rate"]
+scl <- exp(fit.g$coefficients["log(level)"])
+y <- Hgompertz(x, shape = 1/shp, scale = scl)
+y <- scl * exp(x / shp)
+lines(x, y)
+##check.dist(fit.c, fit.g, col = c("red", "blue"), xlab = "Age")
 ```
 
 <!--
@@ -832,8 +844,8 @@ sw$enter <- sw$enter - 105
 sw$exit <- sw$exit - 105
 swit <- rbind(sw, it)
 swit$country <- factor(swit$country)
-fit <- phreg(Surv(enter, exit, event) ~ strata(country) + I(cohort - 1900) + sex, data = swit, dist = "gompertz", param = "rate")
-dr = drop1(fit, test = "Chisq")
+fit <- phreg(Surv(enter, exit, event) ~ strata(country) + I(cohort - 1900) + sex, data = swit, dist = "gompertz")
+##dr = drop1(fit, test = "Chisq")
 ##ltx(fit, dr = dr)
 plot(fit, fn = "sur", col = c("red", "blue"))
 ```
