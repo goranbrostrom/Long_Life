@@ -46,7 +46,66 @@ But **most important**: **Bad statistics** in previous research.
 
 \scriptsize
 
-Authors: James Vaupel and Jim Oeppen.
+Authors: James Vaupel and Jim Oeppen. \alert{Gain / year: } 3 months.
+
+## Sweden 1968-2014: Remaining life at birth
+
+```{r gainperyear}
+library(Sweden)
+library(eha)
+fd <- getDeaths(sex = "females")
+fp <- getPop(sex = "females", years = 1968:2017)
+frat <- fd / fp
+md <- getDeaths(sex = "males")
+mp <- getPop(sex = "males", years = 1968:2017)
+mrat <- md / mp
+cut <- 1:100
+favg <- numeric(50)
+mavg <- numeric(50)
+for (i in 1:50){
+    favg[i] <- mpch(cuts = cut, levels = frat[, i] )
+    mavg[i] <- mpch(cuts = cut, levels = mrat[, i] )    
+}
+year <- 1968:2017
+plot(year, favg, type = "b", col = "red", ylim = c(70, 85), axes = FALSE, xlab = "Year", ylab = "Age")
+axis(1, at = c(seq(1968, 2008, by = 10), 2017))
+axis(2)
+box()
+lines(year, mavg, type = "b", col = "blue")
+text(1980, 82, "Women (1.83 months / year)", col = "red")
+text(2000, 73.2, "Men (2.44 months / year)", col = "blue")
+abline(h = c(70, 75, 80, 85), lty = 3)
+```
+
+## Sweden 1968-2014: Remaining life at age 90
+
+```{r gainperyear90}
+library(Sweden)
+fd <- getDeaths(sex = "females", ages = 90:100)
+fp <- getPop(sex = "females", years = 1968:2017, ages = 90:100)
+frat <- fd / fp
+md <- getDeaths(sex = "males", ages = 90:100)
+mp <- getPop(sex = "males", years = 1968:2017, ages = 90:100)
+mrat <- md / mp
+cut <- 1:10
+favg <- numeric(50)
+mavg <- numeric(50)
+for (i in 1:50){
+    favg[i] <- mpch(cuts = cut, levels = frat[, i] )
+    mavg[i] <- mpch(cuts = cut, levels = mrat[, i] )    
+}
+year <- 1968:2017
+plot(year, favg + 90, type = "b", col = "red", ylim = c(90, 95), axes = FALSE, xlab = "Year", ylab = "Age")
+axis(1, at = c(seq(1968, 2008, by = 10), 2017))
+axis(2)
+box()
+lines(year, mavg + 90, type = "b", col = "blue")
+text(1980, 94.4, "Women (7 days / year)", col = "red")
+text(2000, 92.6, "Men (6 days / year)", col = "blue")
+abline(h = 90)
+abline(h = c(93, 94, 95), lty = 3)
+```
+
 
 ## Chiyo Miyako, Japan
 
