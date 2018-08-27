@@ -55,19 +55,19 @@ library(Sweden)
 library(eha)
 ##source("R/mpch.R")
 fd <- getDeaths(sex = "females")
-fp <- getPop(sex = "females", years = 1968:2014)
+fp <- getPop(sex = "females", years = 1968:2017)
 frat <- fd / fp
 md <- getDeaths(sex = "males")
-mp <- getPop(sex = "males", years = 1968:2014)
+mp <- getPop(sex = "males", years = 1968:2017)
 mrat <- md / mp
 cut <- 1:100
-favg <- numeric(47)
-mavg <- numeric(47)
-for (i in 1:47){
+favg <- numeric(50)
+mavg <- numeric(50)
+for (i in 1:50){
     favg[i] <- mpch(cuts = cut, levels = frat[, i] )
     mavg[i] <- mpch(cuts = cut, levels = mrat[, i] )    
 }
-year <- 1968:2014
+year <- 1968:2017
 plot(year, favg, type = "b", col = "red", ylim = c(70, 85), axes = FALSE, xlab = "Year", ylab = "Age")
 axis(1, at = c(seq(1968, 2008, by = 10), 2017))
 axis(2)
@@ -83,19 +83,19 @@ abline(h = c(70, 75, 80, 85), lty = 3)
 ```{r gainperyear90}
 library(Sweden)
 fd <- getDeaths(sex = "females", ages = 90:100)
-fp <- getPop(sex = "females", years = 1968:2014, ages = 90:100)
+fp <- getPop(sex = "females", years = 1968:2017, ages = 90:100)
 frat <- fd / fp
 md <- getDeaths(sex = "males", ages = 90:100)
-mp <- getPop(sex = "males", years = 1968:2014, ages = 90:100)
+mp <- getPop(sex = "males", years = 1968:2017, ages = 90:100)
 mrat <- md / mp
 cut <- 1:10
-favg <- numeric(47)
-mavg <- numeric(47)
-for (i in 1:47){
+favg <- numeric(50)
+mavg <- numeric(50)
+for (i in 1:50){
     favg[i] <- mpch(cuts = cut, levels = frat[, i] )
     mavg[i] <- mpch(cuts = cut, levels = mrat[, i] )    
 }
-year <- 1968:2014
+year <- 1968:2017
 plot(year, favg + 90, type = "b", col = "red", ylim = c(90, 95), axes = FALSE, xlab = "Year", ylab = "Age")
 axis(1, at = c(seq(1968, 2008, by = 10), 2017))
 axis(2)
@@ -617,27 +617,45 @@ legend("top", legend = c("Dead", "Censored"), pch = c("+", "o"))
 
 There are `r n.w` women and `r n.m` men.
 
-## Check survival distribution
+## The Gompertz distribution
+
+Hazard function:
+
+\begin{equation*}
+h(t; \alpha, r) = \alpha \exp(r t), \quad t > 0
+\end{equation*}
+
+If $r = 0$:
+
+\begin{equation*}
+\begin{split}
+h(t; \alpha, 0) &= \alpha, \quad t > 0 \\
+H(t; \alpha, 0) &= \alpha t, \quad t > 0.
+\end{split}
+\end{equation*}
+
+## Cumulative hazards beyond age 110
 
 ```{r cumhaz110}
 library(eha)
+source("R/Hgomp.R")
 ##with(s110, plot(Surv(enter - 110, exit - 110, event), mark.time = FALSE, fun = "cumhaz"))
 fit.c <- coxreg(Surv(enter-110, exit-110, event) ~ 1, data = s110)
 fit.g <- phreg(Surv(enter-110, exit-110, event) ~ 1, data = s110, dist = "gompertz", param = "rate")
 par(lwd = 2)
-plot(fit.c, axes = FALSE, xlab = "Age", ylab = "Cum. hazards")
+plot(fit.c, axes = FALSE, xlab = "Age", ylab = "Cum. hazards", lty = 2, main = "Gompertz distribution")
 tic <- 0:5
 axis(1, at = tic, labels = tic + 110)
 axis(2, las = 1)
 box()
 x <- seq(0, 5, length = 100)
-shp <- fit.g$coefficients["rate"]
-scl <- exp(fit.g$coefficients["log(level)"])
-y <- Hgompertz(x, shape = 1/shp, scale = scl)
-y <- scl * exp(x / shp)
-lines(x, y)
+
+y <- Hgomp(x, fit.g$coefficients)
+lines(x, y, col = "blue")
 ##check.dist(fit.c, fit.g, col = c("red", "blue"), xlab = "Age")
 ```
+$r = -0.064 \; (0.239)$ 
+
 
 <!--
 ## Analysis, all data, 110+
@@ -676,44 +694,58 @@ legend("topleft", legend = c("Men", "Women"), col = c("blue", "red"), lty = 1)
 legend("top", legend = c("Dead", "Censored"), pch = c("+", "o"))
 ```
 
-## Analysis, all data, 105+
+## Analysis,  105+
 
 \scriptsize
 ```{r swedanal105, results= 'asis'}
 library(eha)
-fit <- coxreg(Surv(enter, exit, event) ~ sex + I(birthdate - 1900), data = s105)
+fit <- phreg(Surv(enter-105, exit-105, event) ~ sex + I(birthdate - 1900), data = s105, dist = "gompertz", param = "rate")
 dr = drop1(fit, test = "Chisq")
 ltx(fit, dr = dr)
 ```
 
 
-## Analysis, no censored observations, 105+
 
-\scriptsize
-```{r swedanal1052, results= 'asis'}
-library(eha)
-fit <- coxreg(Surv(enter, exit, event) ~ sex + I(birthdate - 1900), data = s105[s105$event == 1, ])
-dr = drop1(fit, test = "Chisq")
-ltx(fit, dr = dr)
-```
-
-## Plots, all observations, 105+
+## Baseline hazard, 105+
 
 \scriptsize
 ```{r swedanal105plot, fig.width = 11}
 library(eha)
-ss <- cal.window(s105, c(1969, 2014))
-fit <- coxreg(Surv(enter - 105, exit - 105, event) ~ strata(sex) + I(birthdate - 1900), data = ss)
-plot(fit, col = c("blue", "red"), lwd = 1.5)
+fit.c <- coxreg(Surv(enter - 105, exit - 105, event) ~ sex + I(birthdate - 1900), data = s105)
+##ss <- cal.window(s105, c(1969, 2014))
+##fit <- coxreg(Surv(enter - 105, exit - 105, event) ~ strata(sex) + I(birthdate - 1900), data = s105)
+plot(fit.c, axes = FALSE, xlab = "Age", ylab = "Cum. hazards", lty = 2, main = "Gompertz distribution")
+tic <- 0:10
+axis(1, at = tic, labels = tic + 105)
+axis(2, las = 1)
+box()
+x <- seq(0, 10, length = 100)
+
+y <- Hgomp(x, fit$coefficients[3:4])
+lines(x, y, col = "blue")
 ```
 
-\scriptsize
+$r = -0.014\; (0.026)$ 
 
-*Exponential* distributions?
+## In perspective, 60+
+
+```{r persp}
+s60 <- readRDS("mydata/per_60.rds")
+s60$sex <- s60$KON
+s60 <- s60[s60$enter < s60$exit, ]
+s60$enter <- s60$enter - 60
+s60$exit <- s60$exit - 60
+oj <- piecewise(s60$enter, s60$exit, s60$event, seq(1, 45, by = 1))
+##fit.c <- coxph(Surv(enter - 60, exit - 60, event) ~ sex + I(birthdate - 1900), data = s60)
+##plot(fit.c)
+```
+
+
+<!--
 
 ## Graphical check of constant hazards, 105+
 
-```{r grchb, fig.width = 11}
+```{r grchb, fig.width = 11, eval = FALSE}
 plot(fit, col = c("blue", "red"), lwd = 1.5)
 fit.w <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "woman", ], dist = "pch")
 fit.m <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "man", ], dist = "pch")
@@ -730,7 +762,7 @@ lines(x, y, col = "darkblue", lwd = 1.5)
 
 ## Women, graphical check of constant hazard
 
-```{r graphcheck, fig.width = 11}
+```{r graphcheck, fig.width = 11, eval = FALSE}
 par(lwd = 2)
 fit.e <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "woman", ], shape = 1)
 fit.c <- coxreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "woman", ])
@@ -741,7 +773,7 @@ check.dist(fit.e, fit.c, main = "Exponential check", col = c("red", "darkred"))
 
 \scriptsize
 
-```{r formtestwei, results = 'asis'}
+```{r formtestwei, results = 'asis', eval = FALSE}
 fit.w <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "woman", ])
 dr <- drop1(fit.w, test = "Chisq")
 ltx(fit.w, dr = dr)
@@ -753,13 +785,15 @@ Test of **shape = 1**: *Not* rejected (in the family of Weibull distributions).
 
 \scriptsize
 
-```{r formtestgomp, results = 'asis'}
+```{r formtestgomp, results = 'asis', eval = FALSE}
 fit.g <- phreg(Surv(enter - 105, exit - 105, event) ~ I(birthdate - 1900), data = ss[ss$sex == "woman", ], dist = "gompertz", param = "rate")
 dr <- drop1(fit.g, test = "Chisq")
 ltx(fit.g, dr = dr)
 ```
 
 Test of **rate = 1**: *Not* rejected (in the family of Gompertz distributions).
+
+-->
 
 <!--
 ## Weibull vs. Gompertz
@@ -936,3 +970,12 @@ y <- 667.5 - 0.2762 * x
 lines(x, y, col = "red", lwd = 3)
 ```
 
+## Analysis, no censored observations, 105+
+
+\scriptsize
+```{r swedanal1052, results= 'asis'}
+library(eha)
+fit <- phreg(Surv(enter-105, exit-105, event) ~ sex + I(birthdate - 1900), data = s105[s105$event == 1, ])
+dr = drop1(fit, test = "Chisq")
+ltx(fit, dr = dr)
+```
