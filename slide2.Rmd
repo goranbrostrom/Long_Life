@@ -50,7 +50,7 @@ Authors: James Vaupel and Jim Oeppen. \alert{Gain / year: } 3 months.
 
 ## Sweden 1968-2014: Remaining life at birth
 
-```{r gainperyear, eval = FALSE}
+```{r gainperyear, eval = TRUE}
 library(Sweden)
 library(eha)
 ##source("R/mpch.R")
@@ -80,7 +80,7 @@ abline(h = c(70, 75, 80, 85), lty = 3)
 
 ## Sweden 1968-2014: Remaining life at age 90
 
-```{r gainperyear90, eval = FALSE}
+```{r gainperyear90, eval = TRUE}
 library(Sweden)
 fd <- getDeaths(sex = "females", ages = 90:100)
 fp <- getPop(sex = "females", years = 1968:2017, ages = 90:100)
@@ -873,7 +873,7 @@ axis(2, las = 1)
 box()
 ```
 
-## Skellefteå-Umeå data, birth cohort 1810-1850
+## Skellefteå-Umeå data, birth cohort 1810-1850, ages 60+
 
 ```{r skum, fig.width = 11}
 library(skum)
@@ -914,6 +914,11 @@ abline(v = c(10, 20, 30, 40), lty = 3)
 \item The mortality plateau after age 105 seems universal.
 \item Be aware of risks of sampling bias.
 \item Ditto of informative censoring.
+\item \textcolor{red}{The aging process}
+\begin{itemize}
+\item \textcolor{red}{begins at birth}, and
+\item \textcolor{red}{ends at age 105}
+\end{itemize}
 \end{itemize}
 
 ## Extra material
