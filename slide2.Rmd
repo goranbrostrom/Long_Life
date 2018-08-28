@@ -704,6 +704,9 @@ dr = drop1(fit, test = "Chisq")
 ltx(fit, dr = dr)
 ```
 
+Constant hazard = 0.605.
+
+Mean = 1/0.605 = `r round(1/0.605, 2)` years.
 
 
 ## Baseline hazard, 105+
@@ -714,7 +717,7 @@ library(eha)
 fit.c <- coxreg(Surv(enter - 105, exit - 105, event) ~ sex + I(birthdate - 1900), data = s105)
 ##ss <- cal.window(s105, c(1969, 2014))
 ##fit <- coxreg(Surv(enter - 105, exit - 105, event) ~ strata(sex) + I(birthdate - 1900), data = s105)
-plot(fit.c, axes = FALSE, xlab = "Age", ylab = "Cum. hazards", lty = 2, main = "Gompertz distribution")
+plot(fit.c, axes = FALSE, xlab = "Age", ylab = "Cumulative hazards", lty = 2, main = "Gompertz distribution", lwd = 2)
 tic <- 0:10
 axis(1, at = tic, labels = tic + 105)
 axis(2, las = 1)
@@ -722,24 +725,48 @@ box()
 x <- seq(0, 10, length = 100)
 
 y <- Hgomp(x, fit$coefficients[3:4])
-lines(x, y, col = "blue")
+lines(x, y, col = "blue", lwd = 2)
 ```
 
 $r = -0.014\; (0.026)$ 
 
 ## In perspective, 60+
 
-```{r persp}
+```{r persp, cache = TRUE}
 s60 <- readRDS("mydata/per_60.rds")
 s60$sex <- s60$KON
 s60 <- s60[s60$enter < s60$exit, ]
 s60$enter <- s60$enter - 60
 s60$exit <- s60$exit - 60
-oj <- piecewise(s60$enter, s60$exit, s60$event, seq(1, 45, by = 1))
-##fit.c <- coxph(Surv(enter - 60, exit - 60, event) ~ sex + I(birthdate - 1900), data = s60)
-##plot(fit.c)
+s60 <- s60[s60$sex == 2, ]
+ct <- seq(1, 45, by = 1)
+oj <- piecewise(s60$enter, s60$exit, s60$event, ct)
+x <- seq(0, 55, length = 1000)
+y <- hpch(x, cuts = ct, levels = oj$intensity)
+##plot(x, y, type = "l")
+n <- NROW(s60)
+ss <- s60[sample(n, size = 50000, replace = FALSE), ]
+fit.c <- coxph(Surv(enter, exit, event) ~ 1, data = s60)
+sf <- survfit(fit.c)
+fit.g <- phreg(Surv(enter, exit, event) ~ 1, dist = "gompertz", param = "rate", data = ss)
 ```
 
+```{r plotpersp}
+#par(lwd = 1.5)
+plot(sf, fun = "cumhaz", axes = FALSE, xlab = "Age", conf.int = FALSE, ylab = "Cumulative hazards", lty = 2, 
+     main = "Gompertz distribution", lwd = 2)
+ct = c(0, 10, 20, 30, 37, 45, 53)
+axis(1, at = ct, labels = ct + 60)
+axis(2, las = 1)
+box()
+x <- seq(0, 50, length = 5000)
+y <- Hgomp(x, fit.g$coefficients)
+lines(x, y, col = "blue", lwd = 2)
+abline(h = 0)
+abline(v = c(37, 45), lty = 3)
+```
+
+r = `r round(fit.g$coefficients[1], 3)`, exp(r) = `r round(exp(fit.g$coefficients[1]), 3)`.
 
 <!--
 
