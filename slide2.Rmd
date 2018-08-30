@@ -519,6 +519,8 @@ duration of life is limited” is based on \textcolor{red}{wrong and misleading 
 
 ## How could this happen?
 
+\textcolor{red}{Not} uncommon:
+
 \begin{itemize}
 \item \alert{No statisticians} involved.
 \begin{itemize}
@@ -647,6 +649,7 @@ plot(fit.c, axes = FALSE, xlab = "Age", ylab = "Cum. hazards", lty = 2, main = "
 tic <- 0:5
 axis(1, at = tic, labels = tic + 110)
 axis(2, las = 1)
+axis(4, las = 1)
 box()
 x <- seq(0, 5, length = 100)
 
@@ -722,6 +725,7 @@ plot(fit.c, axes = FALSE, xlab = "Age", ylab = "Cumulative hazards", lty = 2, ma
 tic <- 0:10
 axis(1, at = tic, labels = tic + 105)
 axis(2, las = 1)
+axis(4, las = 1)
 box()
 x <- seq(0, 10, length = 100)
 
@@ -759,6 +763,7 @@ plot(sf, fun = "cumhaz", axes = FALSE, xlab = "Age", conf.int = FALSE, ylab = "C
 ct = c(0, 10, 20, 30, 37, 45, 53)
 axis(1, at = ct, labels = ct + 60)
 axis(2, las = 1)
+axis(4, las = 1)
 box()
 x <- seq(0, 50, length = 5000)
 y <- Hgomp(x, fit.g$coefficients)
@@ -894,14 +899,23 @@ o60$exit <- o60$last
 o60$first <- o60$last <- o60$what <- NULL
 o60 <- o60[o60$enter < o60$exit, ]
 fit <- coxreg(Surv(enter - 60, exit - 60, event) ~ region + sex + I(birthdate - 1840), data = o60)
-fit.g <- phreg(Surv(enter - 60, exit - 60, event) ~ region + sex + I(birthdate - 1840), data = o60, dist = "gompertz")    
+fit.g <- phreg(Surv(enter - 60, exit - 60, event) ~ region + sex + I(birthdate - 1840), data = o60, dist = "gompertz", param = "rate")    
 oldpar <- par(lwd = 2, las = 1)
-check.dist(fit, fit.g, col = c("red", "blue"))
+##check.dist(fit, fit.g, col = c("red", "blue"))
+plot(fit, xlab = "Age", ylab = "Cumulative hazards", 
+     axes = FALSE, lty = 2, ylim = c(0, 12))
+ctt <- seq(0, 50, by = 10)
+axis(1, at = ctt, labels = ctt + 60)
+axis(2, las = 1)
+axis(4, las = 1)
+box()
 par(oldpar)
 abline(h = 0)
 abline(v = 0)
 abline(v = c(10, 20, 30, 40), lty = 3)
-
+x <- seq(0, 50, length = 1000)
+y <- Hgomp(x, fit.g$coefficients[4:5])
+lines(x, y, col = "blue", lwd = 2)
 ```
 
 ## Conclusion
