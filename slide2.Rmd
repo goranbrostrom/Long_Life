@@ -107,6 +107,33 @@ abline(h = 90)
 abline(h = c(93, 94, 95), lty = 3)
 ```
 
+## Sweden 1969-2013: Maximum life
+
+```{r maxlife}
+s90 <- readRDS("mydata/per_90.rds")
+s90$sex = factor(s90$KON, labels = c("man", "woman"))
+s90$sex <- relevel(s90$sex, ref = "woman")
+s90 <- eha::cal.window(s90, c(1969, 2014))
+s90 <- s90[, c("enter", "exit", "event", "birthdate", "sex")]
+i <- 0
+fm <- numeric(45)
+mm <- numeric(45)
+for (year in 1969: 2013){
+    i <- i + 1
+    xx <- eha::cal.window(s90, c(year, year + 1))
+    mm[i] <- max(xx$exit[xx$sex == "man"])
+    fm[i] <- max(xx$exit[xx$sex == "woman"])
+}
+plot(1969:2013, fm, type = "b", col = "red", ylim = c(100, 115), xlab = "Year", ylab = "Age", axes = FALSE, lww = 1.5)
+axis(1, at = c(1969, 1979, 1989, 1999, 2013))
+axis(2, las = 1)
+axis(4, las = 1)
+abline(h = c(100, 105, 110, 115), lty = 3)
+box()
+lines(1969:2013, mm, type = "b", col = "blue")
+text(1981, 112, "Women", col = "red")
+text(1990, 106, "Men", col = "blue")
+```
 
 ## Chiyo Miyako, Japan
 
