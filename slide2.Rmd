@@ -1064,7 +1064,7 @@ ltx(fit, dr = dr)
 ```
 
 
-## Cumulative hazards by period
+## Survival by cohort
 
 ```{r bysex}
 fit <- coxreg(Surv(enter, exit, event) ~ strata(cohort), data = c105)
