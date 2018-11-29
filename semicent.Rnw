@@ -1,0 +1,134 @@
+\documentclass[a4paper]{article}
+\usepackage{natbib}
+\usepackage{amsmath}
+\bibliographystyle{apalike}
+\title{The semi-supercentenarian mortality plateau in Sweden}
+\author{Göran Broström}
+
+\usepackage[nolists,tablesonly]{endfloat}
+%\bibliography{cent.bib}
+
+\begin{document}
+
+\maketitle
+
+<<setup, include = FALSE>>=
+knitr::opts_chunk$set(echo = FALSE)
+@
+
+<<sweddat, include = FALSE, message = FALSE>>=
+s105 <- readRDS("mydata/per_105.rds")
+s105 <- s105[s105$FODELSEAR %in% 1871:1908, ]
+library(eha)
+s105 <- cal.window(s105, c(1976, 2014))
+s105$sex <- factor(s105$KON, labels = c("male", "female"))
+s105$sex <- relevel(s105$sex, ref = "female")
+@
+
+\section{Background}
+
+The question whether human life has an absolute upper limit or not has been in focus lately. \citet{nature16} claimed to have found evidence for the existence of such a limit, but their arguments were soon demolished \citep{leva17, rozh17}. Rather, \citet{italy18} confirms the conclusions of \citet{rozh17}: Life is short but unlimited. In fact, no evidence so far (mid 2018) contradicts the hypothesis that human mortality above age 105 is \emph{constant} (albeit on a high level), that is, the ageing process has come to an end at age 105.
+
+\section{Research questions}
+
+The present research concerns circumstances for Swedish centenarians the last 50 years:
+
+\begin{itemize}
+\item Are there differences in centenarian mortality between
+\begin{itemize}
+\item sexes,
+\item birth cohorts,
+\item time periods, or
+\item social groups?
+\end{itemize}
+\item Is centenarian mortality constant?
+\end{itemize}
+
+\section{Data}
+
+Data are extracted from the Linnaeus database
+\citep{malm10}, which is based on different linked national population
+registers from 1960 to 2013 (censuses, LISA from Statistics Sweden and cause of
+death registers) and is used within the ageing programme at CEDAR, Umeå
+University.
+
+Our sample consists of all individuals in Sweden who reach the age of 105 between 1 January 1976 and 31 December 2013, that is, the birth cohorts 1871--1908. They are followed to death, censoring (out-migration) or 31 December 2013, whichever comes first, see Figure \ref{fig:one}.
+
+\begin{figure}
+<<lexistype, fig.height = 3.5>>=
+n <- NROW(s105)
+plot(1, 1,  xlim = c(1976, 2014), ylim = c(105, 115), type = "n", xlab = "Calendar time", ylab = "Age", axes = FALSE)
+axis(1, at = c(1976, 1991, 2001, 2014))
+axis(2, at = c(105, 110, 115), las = 2)
+box()
+x1 <- s105$birthdate + 105
+y1 <- rep(105, n)
+x2 <- x1 + s105$exit - 105
+y2 <- s105$exit
+colo <- character(n)
+colo[s105$KON == 1] <- "blue"
+colo[s105$KON == 2] <- "red"
+for (i in 1:n){
+
+    lines(c(x1[i], x2[i]), c(y1[i], y2[i]), col = colo[i])
+}
+abline(h = 105)
+abline(v = 2014, col = "lightgreen", lty = 1)
+@
+\caption{Swedish data: females (red) and males (blue).}
+\label{fig:one}
+\end{figure}
+
+A comparison is made with the Italian study by \citet{italy18}, who kindly sold their data to us: Birth cohorts 1896--1910.
+
+\section{Models and Methods}
+
+The survival distribution of subsets of the data is estimated by both a nonparametric and a parametric model, specifically the \emph{Gompertz} distribution with hazard function $h$ given by
+
+\begin{equation*}
+h(t) = \alpha e^{-\beta t}, \quad t > 0; \quad \alpha > 0, \, \beta \ge 0.
+\end{equation*}
+
+The hypothesis of constant hazard is tested both graphically and formally. In the informal graphical test we compare the estimated cumulative hazards for an exponential distribution with the \emph{Nelson-Aalen} estimator, and the formal test is performeb by testing the hypothesis $\beta = 0$ in the Gompertz model.
+
+\section{Results}
+
+\subsection{Graphical comparison of cumulative hazard functions}
+
+
+\begin{figure}
+<<graphcomp, fig.height = 3.5>>=
+fit.c <- coxreg(Surv(enter, exit, event) ~  sex, data = s105[s105$birthdate < 1901,])
+fit.exp <- phreg(Surv(enter, exit, event) ~ sex, data = s105[s105$birthdate < 1901, ], shape = 1)
+##check.dist(fit.c, fit.exp, main = "", xlab = "Age", axes = FALSE)
+plot(fit.c, xlab = "Age", ylab = "Cumulative hazards", lty = 2, col = "blue", axes = FALSE)
+axis(1, at = c(105, 107, 109, 111, 113))
+axis(2, las = 2)
+box()
+levl <- exp(-coef(fit.exp)["log(scale)"])
+abline(a = -105 * levl, b = levl, col = "red")
+legend("topleft", legend = c("Nelson-Aalen", "Exponential"), col = c("blue", "red"), lty = c(2, 1))
+@
+\caption{Nonparametric and exponential cumulative hazards estimates for the Swedish cohort consisting of those who reached age 105 between 1976 and 2004.}
+\label{fig:totcoh}
+\end{figure}
+
+From Figure \ref{fig:totcoh} it is evident that the constant hazard function model gives an excellent fit!
+The slope is estimated to \Sexpr{round(levl, 3)}, which corresponds to a one-year survival probability of
+\Sexpr{round(exp(-levl), 3)}.
+
+\subsection{Formal test of constant hazard function}
+
+See Table \ref{tab:formtest}.
+
+<<formtest,results='asis'>>=
+fit.g <- phreg(Surv(enter-105, exit - 105, event) ~ sex, dist = 'gompertz', param = "rate", data = s105[s105$birthdate < 1901, ])
+dr <- drop1(fit.g, test = "Chisq")
+ltx(fit.g, dr = dr, caption = "Gompertz fit.", label = "tab:formtest",digits=4)
+@
+
+\section{Conclusions}
+
+\bibliography{cent}
+
+\end{document}
