@@ -2,8 +2,9 @@
 \usepackage{natbib}
 \usepackage{amsmath}
 \bibliographystyle{apalike}
-\title{The semi-supercentenarian mortality plateau in Sweden}
-\author{Göran Broström}
+\title{The semi-supercentenarian mortality plateau in Sweden (abstract)}
+\author{Göran Broström \\
+CEDAR, Umeå University}
 
 \usepackage[nolists,tablesonly]{endfloat}
 %\bibliography{cent.bib}
@@ -23,11 +24,12 @@ library(eha)
 s105 <- cal.window(s105, c(1976, 2014))
 s105$sex <- factor(s105$KON, labels = c("male", "female"))
 s105$sex <- relevel(s105$sex, ref = "female")
+s105$cohort <- cut(s105$FODELSEAR, c(1870, 1880, 1890, 1900, 1908), dig.lab = 4)
 @
 
 \section{Background}
 
-The question whether human life has an absolute upper limit or not has been in focus lately. \citet{nature16} claimed to have found evidence for the existence of such a limit, but their arguments were soon demolished \citep{leva17, rozh17}. Rather, \citet{italy18} confirms the conclusions of \citet{rozh17}: Life is short but unlimited. In fact, no evidence so far (mid 2018) contradicts the hypothesis that human mortality above age 105 is \emph{constant} (albeit on a high level), that is, the ageing process has come to an end at age 105.
+The question whether human life has an absolute upper limit or not has been in focus lately. \citet{nature16} claimed to have found evidence for the existence of such a limit, but their arguments were soon demolished \citep{leva17, rozh17}. Rather, \citet{italy18} confirms the conclusions of \citet{rozh17}: Life is short but unlimited. In fact, no evidence so far (mid 2018) contradicts the hypothesis that human mortality above age 105 is \emph{constant} (albeit on a high level), that is, the aging process has come to an end at age 105.
 
 \section{Research questions}
 
@@ -41,7 +43,7 @@ The present research concerns circumstances for Swedish centenarians the last 50
 \item time periods, or
 \item social groups?
 \end{itemize}
-\item Is centenarian mortality constant?
+\item Is centenarian mortality (above age 100) constant?
 \end{itemize}
 
 \section{Data}
@@ -49,10 +51,10 @@ The present research concerns circumstances for Swedish centenarians the last 50
 Data are extracted from the Linnaeus database
 \citep{malm10}, which is based on different linked national population
 registers from 1960 to 2013 (censuses, LISA from Statistics Sweden and cause of
-death registers) and is used within the ageing programme at CEDAR, Umeå
+death registers) and is used within the aging program at CEDAR, Umeå
 University.
 
-Our sample consists of all individuals in Sweden who reach the age of 105 between 1 January 1976 and 31 December 2013, that is, the birth cohorts 1871--1908. They are followed to death, censoring (out-migration) or 31 December 2013, whichever comes first, see Figure \ref{fig:one}.
+Our sample consists of all individuals in Sweden, 820 women and 136 men,  who reach the age of 105 between 1 January 1976 and 31 December 2013, that is, the birth cohorts 1871--1908. They are followed to death, censoring (out-migration) or 31 December 2013, whichever comes first, see Figure \ref{fig:one}.
 
 \begin{figure}
 <<lexistype, fig.height = 3.5>>=
@@ -74,8 +76,11 @@ for (i in 1:n){
 }
 abline(h = 105)
 abline(v = 2014, col = "lightgreen", lty = 1)
+x <- s105$birthdate[s105$event == 0] + s105$exit[s105$event == 0]
+y <- s105$exit[s105$event == 0]
+points(x, y, cex = 0.5)
 @
-\caption{Swedish data: females (red) and males (blue).}
+\caption{Swedish data: females (red) and males (blue). The small circles marks censored observations.}
 \label{fig:one}
 \end{figure}
 
@@ -89,17 +94,17 @@ The survival distribution of subsets of the data is estimated by both a nonparam
 h(t) = \alpha e^{-\beta t}, \quad t > 0; \quad \alpha > 0, \, \beta \ge 0.
 \end{equation*}
 
-The hypothesis of constant hazard is tested both graphically and formally. In the informal graphical test we compare the estimated cumulative hazards for an exponential distribution with the \emph{Nelson-Aalen} estimator, and the formal test is performeb by testing the hypothesis $\beta = 0$ in the Gompertz model.
+The hypothesis of constant hazard is tested both graphically and formally. In the informal graphical test we compare the estimated cumulative hazards for an exponential distribution with the \emph{Nelson-Aalen} estimator, and the formal test is performed by testing the hypothesis $\beta = 0$ in the Gompertz model.
 
 \section{Results}
 
 \subsection{Graphical comparison of cumulative hazard functions}
 
 
-\begin{figure}
+\begin{figure}[h]
 <<graphcomp, fig.height = 3.5>>=
-fit.c <- coxreg(Surv(enter, exit, event) ~  sex, data = s105[s105$birthdate < 1901,])
-fit.exp <- phreg(Surv(enter, exit, event) ~ sex, data = s105[s105$birthdate < 1901, ], shape = 1)
+fit.c <- coxreg(Surv(enter, exit, event) ~  sex + cohort, data = s105[s105$birthdate < 1915,])
+fit.exp <- phreg(Surv(enter, exit, event) ~ sex + cohort, data = s105[s105$birthdate < 1915, ], shape = 1)
 ##check.dist(fit.c, fit.exp, main = "", xlab = "Age", axes = FALSE)
 plot(fit.c, xlab = "Age", ylab = "Cumulative hazards", lty = 2, col = "blue", axes = FALSE)
 axis(1, at = c(105, 107, 109, 111, 113))
@@ -113,21 +118,48 @@ legend("topleft", legend = c("Nelson-Aalen", "Exponential"), col = c("blue", "re
 \label{fig:totcoh}
 \end{figure}
 
-From Figure \ref{fig:totcoh} it is evident that the constant hazard function model gives an excellent fit!
+From Figure \ref{fig:totcoh} it is evident that the constant hazard function model (exponential survival distribution) gives an excellent fit!
 The slope is estimated to \Sexpr{round(levl, 3)}, which corresponds to a one-year survival probability of
 \Sexpr{round(exp(-levl), 3)}.
 
+The cumulative hazards in subgroups are shown in Figure \ref{fig:subgr}: Same conclusion.
+
+\begin{figure}
+<<subgr, fig.height = 3.5>>=
+cls <- rainbow(5, s = 1.0)
+cls <- cls[c(2, 3, 1, 5)]
+cls[1] <- "black"
+cls[2] <- "darkgreen"
+oldpar <- par(mfrow = c(1, 2), las = 1)
+fit.sex <- coxreg(Surv(enter, exit, event) ~ strata(sex) + cohort, data = s105)
+plot(fit.sex, main = "Sex", col = c("blue", "red"), lty = 1:2, printLegend = FALSE, xlab = "Age")
+legend("topleft", legend = c("female", "male"), col = c("blue", "red"), lty = 1:2, cex = 0.8)
+fit.coh <- coxreg(Surv(enter, exit, event) ~ strata(cohort), data = s105)
+plot(fit.coh, main = "Birth cohort", col = cls, lty = c(1:2, 4:5), printLegend = FALSE, xlab = "Age")
+legend("topleft", legend = levels(s105$cohort), col = cls, lty = c(1:2, 4:5), cex = 0.7)
+par(oldpar)
+@
+\caption{Cumulative hazards by sex (left panel) and birth cohort (right panel).}
+\label{fig:subgr}
+\end{figure}
+
 \subsection{Formal test of constant hazard function}
 
-See Table \ref{tab:formtest}.
+The formal test of constant hazard is performed by a parametric survival analysis assuming a proportional hazards model. See Table \ref{tab:formtest}.
 
 <<formtest,results='asis'>>=
-fit.g <- phreg(Surv(enter-105, exit - 105, event) ~ sex, dist = 'gompertz', param = "rate", data = s105[s105$birthdate < 1901, ])
+fit.g <- phreg(Surv(enter-105, exit - 105, event) ~ sex + cohort, dist = 'gompertz', param = "rate", data = s105[s105$birthdate < 1915, ])
 dr <- drop1(fit.g, test = "Chisq")
 ltx(fit.g, dr = dr, caption = "Gompertz fit.", label = "tab:formtest",digits=4)
 @
 
+The estimate of the \emph{rate} parameter is essentially zero (\Sexpr{round(fit.g$coef["rate"], 4)}), implying an \emph{exponential} baseline distribution. Notice also that there are no statistically significant differences in mortality in the given subgroups of \emph{sex} and \emph{cohort}.
+
 \section{Conclusions}
+
+The answers to the above given research questions are four \emph{No} and one \emph{Yes}, respectively,  for \emph{semi-supercentenarians} (age above 105). In the final paper, the results for social groups will also be added, as will the comparison with the Italian case, which shows a striking similarity with the Swedish case.
+
+A general conclusion is that semi-supercentenarian mortality is constant, and equally distributed over subgroups. The latter statement seems to indicate that this phenomenon is \emph{not} the result of selection effects due to heterogeneity. It must be added, though, that all these conclusions are based on \emph{negative inference}, that is, null hypotheses that could not be rejected. When more data will be available, the conclusions may well be different.
 
 \bibliography{cent}
 
